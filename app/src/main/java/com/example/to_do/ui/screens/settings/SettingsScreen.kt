@@ -1,22 +1,24 @@
 package com.example.to_do.ui.screens.settings
 
-// ui/screens/settings/SettingsScreen.kt
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.to_do.ui.components.TodoAppBar
+import com.example.to_do.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
-    navController: NavController
+    navController: NavController,
+    vm: SettingsViewModel = hiltViewModel()          // ← inject VM
 ) {
-    var darkTheme by remember { mutableStateOf(false) }
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    /* ---------- collect prefs ------------------------------------------- */
+    val darkTheme by vm.darkTheme.collectAsState()   // Flow → State<Boolean>
+    val sortAsc   by vm.sortAsc.collectAsState()
 
     Scaffold(
         topBar = {
@@ -33,12 +35,9 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            Text(
-                text = "Appearance",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
 
+            /* Appearance section ---------------------------------------- */
+            Text("Appearance", style = MaterialTheme.typography.titleLarge)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -55,20 +54,14 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f)
                     )
-
                     Switch(
                         checked = darkTheme,
-                        onCheckedChange = { darkTheme = it }
+                        onCheckedChange = vm::setDarkTheme        // ← save to DataStore
                     )
                 }
             }
 
-            Text(
-                text = "Notifications",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
+            /* Sort-order preference ------------------------------------- */
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -81,24 +74,19 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Enable Notifications",
+                        text = "Sort A → Z",
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f)
                     )
-
                     Switch(
-                        checked = notificationsEnabled,
-                        onCheckedChange = { notificationsEnabled = it }
+                        checked = sortAsc,
+                        onCheckedChange = vm::setSortAsc          // ← save to DataStore
                     )
                 }
             }
 
-            Text(
-                text = "About",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
+            /* About section (unchanged) --------------------------------- */
+            Text("About", style = MaterialTheme.typography.titleLarge)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,23 +97,11 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    Text(
-                        text = "Todo App",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Text(
-                        text = "Version 1.0.0",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    Text(
-                        text = "© 2025 MyCompany",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text("Todo App", style = MaterialTheme.typography.bodyLarge)
+                    Text("Version 1.0.0", style = MaterialTheme.typography.bodyMedium)
+                    Text("© 2025 MyCompany", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
     }
 }
-

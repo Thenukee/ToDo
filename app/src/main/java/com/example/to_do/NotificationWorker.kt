@@ -11,11 +11,7 @@ import androidx.core.app.TaskStackBuilder
 import androidx.work.*
 import com.example.to_do.MainActivity
 import com.example.to_do.R
-import com.example.to_do.data.model.Task
-import com.example.to_do.data.local.TodoDatabase
 import java.util.concurrent.TimeUnit
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
 
 class NotificationWorker(

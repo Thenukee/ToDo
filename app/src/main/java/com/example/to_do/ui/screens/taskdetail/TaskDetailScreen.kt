@@ -15,8 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.to_do.data.model.SubTask
-import com.example.to_do.data.model.Task
 import com.example.to_do.ui.components.TodoAppBar
 import com.example.to_do.ui.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
