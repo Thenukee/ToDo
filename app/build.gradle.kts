@@ -11,6 +11,7 @@ plugins {
 
 
 
+
 }
 
 android {
@@ -138,6 +139,24 @@ dependencies {
 
     // For file handling
     implementation("androidx.documentfile:documentfile:1.0.1")
+
+    // --- Firebase Firestore ---
+    implementation(platform("com.google.firebase:firebase-bom:33.5.0"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // --- DataStore ---
+    implementation ("androidx.datastore:datastore-preferences:1.1.1")
+
+
+    // --- Coroutines / Lifecycle ---
+    implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android")
+
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.8.1")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.1")
+
+    // --- RecyclerView drag-drop helper ---
+    implementation ("androidx.recyclerview:recyclerview:1.4.0")
 
     // Testing
     testImplementation(libs.junit)
