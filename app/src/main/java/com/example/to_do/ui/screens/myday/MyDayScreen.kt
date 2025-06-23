@@ -22,17 +22,11 @@ fun MyDayScreen(
     viewModel: TaskViewModel = hiltViewModel()
 ) {
     val myDayTasks by viewModel.myDayTasks.collectAsState(initial = emptyList())
+    val allLists by viewModel.allLists.collectAsState(initial = emptyList())
     val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
     val todayDate = dateFormat.format(Date())
 
     Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "My Day",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        },
         bottomBar = {
             AddTaskBar(
                 onAddTask = { title ->
@@ -58,7 +52,7 @@ fun MyDayScreen(
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
             ) {
-                items(myDayTasks) { task ->
+                items(myDayTasks, key = { it.id }) { task ->
                     TaskItem(
                         task = task,
                         onTaskClick = { selectedTask ->
@@ -69,7 +63,10 @@ fun MyDayScreen(
                         },
                         onImportantToggle = { selectedTask ->
                             viewModel.toggleImportant(selectedTask)
-                        }
+                        },
+                        onDelete = { viewModel.deleteTask(it) },
+                        onMoveTask = viewModel::moveTaskToList,
+                        availableLists = allLists
                     )
                 }
 

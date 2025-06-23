@@ -24,15 +24,10 @@ fun SearchScreen(
 ) {
     var query by remember { mutableStateOf("") }
     val results by vm.searchTasks(query).collectAsState(initial = emptyList())
+    val allLists by vm.allLists.collectAsState(initial = emptyList())
 
     Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "Search",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        }
+        // No topBar - provided by MainActivity
     ) { inner ->
         Column(Modifier.padding(inner)) {
             SearchBar(
@@ -48,7 +43,10 @@ fun SearchScreen(
                         task = task,
                         onTaskClick       = { navController.navigate("task_detail/${task.id}") },
                         onCompleteToggle  = vm::toggleTaskCompletion,
-                        onImportantToggle = vm::toggleImportant
+                        onImportantToggle = vm::toggleImportant,
+                        onDelete = vm::deleteTask,
+                        onMoveTask = vm::moveTaskToList,
+                        availableLists = allLists
                     )
                 }
             }

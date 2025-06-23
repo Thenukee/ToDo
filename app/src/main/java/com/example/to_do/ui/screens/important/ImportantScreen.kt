@@ -1,4 +1,3 @@
-
 package com.example.to_do.ui.screens.important
 
 import androidx.compose.foundation.layout.*
@@ -12,7 +11,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.to_do.ui.components.AddTaskBar
 import com.example.to_do.ui.components.TaskItem
-import com.example.to_do.ui.components.TodoAppBar
 import com.example.to_do.ui.viewmodel.TaskViewModel
 
 @Composable
@@ -21,15 +19,9 @@ fun ImportantScreen(
     viewModel: TaskViewModel = hiltViewModel()
 ) {
     val importantTasks by viewModel.importantTasks.collectAsState(initial = emptyList())
+    val allLists by viewModel.allLists.collectAsState(initial = emptyList())
 
     Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "Important",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        },
         bottomBar = {
             AddTaskBar(
                 onAddTask = { title ->
@@ -45,7 +37,7 @@ fun ImportantScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
-            items(importantTasks) { task ->
+            items(importantTasks, key = { it.id }) { task ->
                 TaskItem(
                     task = task,
                     onTaskClick = { selectedTask ->
@@ -56,7 +48,10 @@ fun ImportantScreen(
                     },
                     onImportantToggle = { selectedTask ->
                         viewModel.toggleImportant(selectedTask)
-                    }
+                    },
+                    onDelete = { viewModel.deleteTask(it) },
+                    onMoveTask = viewModel::moveTaskToList,
+                    availableLists = allLists
                 )
             }
 

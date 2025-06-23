@@ -1,37 +1,73 @@
 package com.example.to_do.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.example.to_do.data.entity.TaskEntity
+import com.example.to_do.data.entity.TaskListEntity
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskItem(
     task: TaskEntity,
     onTaskClick: (TaskEntity) -> Unit,
     onCompleteToggle: (TaskEntity) -> Unit,
     onImportantToggle: (TaskEntity) -> Unit,
+    onDelete: ((TaskEntity) -> Unit)? = null,
+    onMoveTask: ((TaskEntity, String) -> Unit)? = null,
+    availableLists: List<TaskListEntity> = emptyList(),
     modifier: Modifier = Modifier
 ) {
+    // State to control the task action menu
+    var showTaskMenu by remember { mutableStateOf(false) }
+    var showMoveDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    
+    // Animate color changes for smoother transitions
+    val cardColor by animateColorAsState(
+        targetValue = if (task.isCompleted)
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        else
+            MaterialTheme.colorScheme.surface
+    )
+
+    val textColor by animateColorAsState(
+        targetValue = if (task.isCompleted)
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        else
+            MaterialTheme.colorScheme.onSurface
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { onTaskClick(task) },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .combinedClickable(
+                onClick = { onTaskClick(task) },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showTaskMenu = true
+                }
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
         Row(
             modifier = Modifier
@@ -41,9 +77,15 @@ fun TaskItem(
         ) {
             IconButton(onClick = { onCompleteToggle(task) }) {
                 Icon(
-                    imageVector = if (task.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
+                    imageVector = if (task.isCompleted)
+                        Icons.Filled.CheckCircle
+                    else
+                        Icons.Filled.RadioButtonUnchecked,
                     contentDescription = if (task.isCompleted) "Mark as incomplete" else "Mark as complete",
-                    tint = if (task.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (task.isCompleted)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -56,7 +98,7 @@ fun TaskItem(
                     text = task.title,
                     style = MaterialTheme.typography.bodyLarge,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                    color = textColor
                 )
 
                 if (task.description.isNotEmpty()) {
@@ -65,7 +107,7 @@ fun TaskItem(
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
 
@@ -73,10 +115,19 @@ fun TaskItem(
                     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
                     val dueDateText = dateFormat.format(Date(dueDate))
 
+                    val today = Calendar.getInstance()
+                    val dueCalendar = Calendar.getInstance().apply { timeInMillis = dueDate }
+                    val isPastDue = dueCalendar.before(today) && !task.isCompleted
+
+                    val dueDateColor = if (isPastDue)
+                        MaterialTheme.colorScheme.error
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+
                     Text(
                         text = "Due: $dueDateText",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = dueDateColor
                     )
                 }
             }
@@ -87,6 +138,113 @@ fun TaskItem(
                     contentDescription = if (task.isImportant) "Remove from important" else "Mark as important",
                     tint = if (task.isImportant) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+    }
+    
+    // Task menu dialog
+    if (showTaskMenu) {
+        AlertDialog(
+            onDismissRequest = { showTaskMenu = false },
+            title = { Text("Task Options") },
+            text = { Text("Choose an action for ${task.title}")
+                // or, if you really want the title in quotes:
+                // Text("Choose an action for \"${task.title}\"")
+            },
+            confirmButton = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (onDelete != null) {
+                        TextButton(
+                            onClick = {
+                                onDelete(task)
+                                showTaskMenu = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Delete")
+                        }
+                    }
+                    
+                    if (onMoveTask != null && availableLists.isNotEmpty()) {
+                        TextButton(
+                            onClick = {
+                                showTaskMenu = false
+                                showMoveDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.DriveFileMove, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Move to...")
+                        }
+                    }
+                    
+                    TextButton(
+                        onClick = { showTaskMenu = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            },
+            dismissButton = {}
+        )
+    }
+    
+    // Move task dialog
+    if (showMoveDialog && onMoveTask != null) {
+        Dialog(onDismissRequest = { showMoveDialog = false }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Move to list",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    availableLists.forEach { list ->
+                        val isCurrentList = list.id == task.listId
+                        ListItem(
+                            headlineContent = { Text(list.name) },
+                            leadingContent = {
+                                if (isCurrentList) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                } else {
+                                    Icon(Icons.Default.List, contentDescription = null)
+                                }
+                            },
+                            modifier = Modifier.clickable {
+                                if (!isCurrentList) {
+                                    onMoveTask(task, list.id)
+                                }
+                                showMoveDialog = false
+                            }
+                        )
+                    }
+                    
+                    TextButton(
+                        onClick = { showMoveDialog = false },
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .padding(top = 8.dp)
+                    ) {
+                        Text("Cancel")
+                    }
+                }
             }
         }
     }

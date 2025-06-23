@@ -13,7 +13,7 @@ import com.example.to_do.ui.screens.myday.MyDayScreen
 import com.example.to_do.ui.screens.important.ImportantScreen
 import com.example.to_do.ui.screens.planned.PlannedScreen
 import com.example.to_do.ui.screens.settings.SettingsScreen
-import com.example.to_do.ui.screens.list.ListTasksScreen
+import com.example.to_do.ui.screens.list.ListTasksScreen // Make sure this import is using the singular 'list' package
 import com.example.to_do.ui.screens.lists.ListsScreen
 import com.example.to_do.ui.screens.splash.SplashScreen
 

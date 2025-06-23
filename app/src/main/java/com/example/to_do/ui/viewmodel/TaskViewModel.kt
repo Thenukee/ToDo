@@ -49,6 +49,56 @@ class TaskViewModel @Inject constructor(
 
     fun getList(id: String): Flow<TaskListEntity?> = repo.getList(id)
 
+    fun updateListColor(id: String, newColor: Int) = viewModelScope.launch {
+        val list = repo.getListSync(id) ?: return@launch
+        repo.updateList(list.copy(color = newColor))
+    }
+
+    fun updateListEmoji(id: String, newEmoji: String?) = viewModelScope.launch {
+        val list = repo.getListSync(id) ?: return@launch
+        repo.updateList(list.copy(emoji = newEmoji))
+    }
+
+    fun duplicateList(id: String) = viewModelScope.launch {
+        // Get the list to duplicate
+        val originalList = repo.getListSync(id) ?: return@launch
+        val tasks = repo.getTasksByListSync(id)
+        
+        // Create a new list with the same properties but a new ID
+        val newListId = UUID.randomUUID().toString()
+        val newList = originalList.copy(
+            id = newListId,
+            name = "${originalList.name} (Copy)",
+            position = Int.MAX_VALUE // Will be positioned last
+        )
+        
+        // Insert the new list
+        repo.insertList(newList)
+        
+        // Copy all tasks to the new list
+        tasks.forEach { task ->
+            val newTask = task.copy(
+                id = UUID.randomUUID().toString(),
+                listId = newListId
+            )
+            repo.insertTask(newTask)
+        }
+    }
+    
+    fun clearCompletedTasks(listId: String) = viewModelScope.launch {
+        val tasks = repo.getTasksByListSync(listId)
+        tasks.filter { it.isCompleted }.forEach { task ->
+            repo.deleteTask(task)
+        }
+    }
+
+    fun clearCompletedTasksInAllLists() = viewModelScope.launch {
+        val allTasks = repo.getAllTasksSync()
+        allTasks.filter { it.isCompleted }.forEach { task ->
+            repo.deleteTask(task)
+        }
+    }
+
     /* ───────────── Tasks ───────────── */
 
     fun createTask(
@@ -139,4 +189,19 @@ class TaskViewModel @Inject constructor(
 
     fun searchTasks(q: String)            = repo.searchTasks(q)
     fun getTaskWithDetails(id: String)    = repo.getTaskWithDetails(id)
+
+    fun moveTaskToList(task: TaskEntity, targetListId: String) = viewModelScope.launch {
+        if (task.listId != targetListId) {
+            // Get the target list's tasks to determine the new position
+            val tasksInTargetList = repo.getTasksByListSync(targetListId)
+            val newPosition = if (tasksInTargetList.isEmpty()) 0 else tasksInTargetList.size
+            
+            // Update the task with the new list ID and position
+            val updatedTask = task.copy(
+                listId = targetListId,
+                position = newPosition
+            )
+            repo.updateTask(updatedTask)
+        }
+    }
 }

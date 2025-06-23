@@ -44,6 +44,7 @@ class TaskRepository @Inject constructor(
     fun getPlannedTasks()   = dao.getPlannedTasks()
 
     fun getTasksByList(listId: String) = dao.getTasksByList(listId)
+    suspend fun getTasksByListSync(listId: String) = dao.getTasksByListSync(listId)
 
     suspend fun swapTaskPositions(listId: String, from: Int, to: Int) =
         dao.swapPositions(listId, from, to)
@@ -51,6 +52,8 @@ class TaskRepository @Inject constructor(
     suspend fun insertTask(task: TaskEntity)  = dao.insertTask(task)
     suspend fun updateTask(task: TaskEntity)  = dao.updateTask(task)
     suspend fun deleteTask(task: TaskEntity)  = dao.deleteTask(task)
+
+    suspend fun getAllTasksSync() = dao.getAllTasksSync()
 
     /* ───────────────────────  Sub-tasks  ──────────────────────── */
 

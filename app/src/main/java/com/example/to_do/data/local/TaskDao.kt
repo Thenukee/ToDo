@@ -158,6 +158,9 @@ interface TaskDao {
             updateTask(task.copy(position = idx))
         }
     }
+
+    @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
+    suspend fun getAllTasksSync(): List<TaskEntity>
 }
 
 

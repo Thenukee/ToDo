@@ -1,26 +1,33 @@
 package com.example.to_do.ui.screens.lists
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.to_do.data.entity.TaskListEntity
 import com.example.to_do.ui.components.TodoAppBar
 import com.example.to_do.ui.viewmodel.TaskViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ListsScreen(
     navController: NavController,
@@ -29,15 +36,11 @@ fun ListsScreen(
     val lists by vm.allLists.collectAsState(initial = emptyList())
     var showAddDialog by remember { mutableStateOf(false) }
     var newListName by remember { mutableStateOf("") }
+    var selectedList by remember { mutableStateOf<TaskListEntity?>(null) }
+    val haptic = LocalHapticFeedback.current
 
     Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "My Lists",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        },
+        // No topBar needed - it's handled by MainActivity
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add List")
@@ -79,21 +82,26 @@ fun ListsScreen(
                 }
             }
         } else {
-            // Show list of lists
+            // Show list of lists with long press menu instead of swipe
             LazyColumn(
                 Modifier
                     .padding(inner)
                     .padding(horizontal = 16.dp)
             ) {
-                items(lists) { list ->
+                items(lists, key = { it.id }) { list ->
                     Card(
                         Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp)
-                            .clickable {
-                                // Fixed navigation route to match TodoNavHost
-                                navController.navigate("list_tasks/${list.id}")
-                            },
+                            .combinedClickable(
+                                onClick = {
+                                    navController.navigate("list_tasks/${list.id}")
+                                },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    selectedList = list
+                                }
+                            ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Row(
@@ -132,6 +140,90 @@ fun ListsScreen(
                 
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
+        }
+    }
+    
+    // List action menu dialog
+    selectedList?.let { list ->
+        var showRenameDialog by remember { mutableStateOf(false) }
+        var newName by remember { mutableStateOf(list.name) }
+            
+        AlertDialog(
+            onDismissRequest = { selectedList = null },
+            title = { Text("List Options") },
+            text = { Text("Choose an action for ${list.name}") },
+            confirmButton = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    TextButton(
+                        onClick = {
+                            vm.deleteList(list.id)
+                            selectedList = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Delete")
+                    }
+                    
+                    TextButton(
+                        onClick = {
+                            showRenameDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Rename")
+                    }
+                    
+                    TextButton(
+                        onClick = { selectedList = null },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            },
+            dismissButton = {}
+        )
+        
+        if (showRenameDialog) {
+            AlertDialog(
+                onDismissRequest = { showRenameDialog = false },
+                title = { Text("Rename List") },
+                text = {
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it },
+                        label = { Text("List Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (newName.isNotBlank()) {
+                                vm.renameList(list.id, newName.trim())
+                                showRenameDialog = false
+                                selectedList = null
+                            }
+                        },
+                        enabled = newName.isNotBlank()
+                    ) {
+                        Text("Rename")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRenameDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
     
