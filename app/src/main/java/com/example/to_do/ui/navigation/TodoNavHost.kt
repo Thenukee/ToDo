@@ -32,7 +32,7 @@ fun TodoNavHost(navController: NavHostController) {
         composable("lists") {
             ListsScreen(navController = navController)
         }
-
+        
         composable("home") {
             HomeScreen(navController = navController)
         }
