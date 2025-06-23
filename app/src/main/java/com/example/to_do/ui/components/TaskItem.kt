@@ -14,15 +14,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.to_do.data.entity.TaskEntity
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun TaskItem(
-    task: Task,
-    onTaskClick: (Task) -> Unit,
-    onCompleteToggle: (Task) -> Unit,
-    onImportantToggle: (Task) -> Unit,
+    task: TaskEntity,
+    onTaskClick: (TaskEntity) -> Unit,
+    onCompleteToggle: (TaskEntity) -> Unit,
+    onImportantToggle: (TaskEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(

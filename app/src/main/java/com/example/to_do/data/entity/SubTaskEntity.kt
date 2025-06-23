@@ -1,6 +1,4 @@
-package com.example.to_do.data.model
-
-// models/Attachment.kt
+package com.example.to_do.data.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -8,22 +6,23 @@ import androidx.room.PrimaryKey
 import java.util.*
 
 @Entity(
-    tableName = "attachments",
+    tableName = "subtasks",
     foreignKeys = [
         ForeignKey(
-            entity = Task::class,
+            entity = TaskEntity::class,
             parentColumns = ["id"],
             childColumns = ["taskId"],
             onDelete = ForeignKey.CASCADE
         )
     ]
 )
-data class Attachment(
+data class SubTaskEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val taskId: String,
-    val uri: String,
-    val name: String,
-    val type: String,
-    val size: Long,
-    val createdAt: Long = System.currentTimeMillis()
+    val title: String,
+    val isCompleted: Boolean = false,
+    val position: Int = 0
 )
+
+
+

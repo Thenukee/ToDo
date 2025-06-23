@@ -6,7 +6,12 @@ import com.example.to_do.data.dao.TodoDao
 import com.example.to_do.data.entity.*
 
 @Database(
-    entities = [TodoListEntity::class, ItemEntity::class],
+    entities = [
+        TaskEntity::class,
+        SubTaskEntity::class,
+        TaskListEntity::class,
+        AttachmentEntity::class
+    ],
     version = 2,             // bump from 1 to 2
     exportSchema = true
 )

@@ -3,10 +3,12 @@ package com.example.to_do.data.local
 // data/local/TaskDao.kt
 
 import androidx.room.*
+import com.example.to_do.data.entity.AttachmentEntity
 import com.example.to_do.data.entity.ListWithTasks
+import com.example.to_do.data.entity.SubTaskEntity
 import com.example.to_do.data.entity.TaskEntity
+import com.example.to_do.data.entity.TaskList
 import com.example.to_do.data.entity.TaskListEntity
-import com.example.to_do.data.model.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -41,16 +43,16 @@ interface TaskDao {
 
     // SubTask operations
     @Query("SELECT * FROM subtasks WHERE taskId = :taskId ORDER BY position ASC")
-    fun getSubTasksForTask(taskId: String): Flow<List<SubTask>>
+    fun getSubTasksForTask(taskId: String): Flow<List<SubTaskEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSubTask(subTask: SubTask)
+    suspend fun insertSubTask(subTask: SubTaskEntity)
 
     @Update
-    suspend fun updateSubTask(subTask: SubTask)
+    suspend fun updateSubTask(subTask: SubTaskEntity)
 
     @Delete
-    suspend fun deleteSubTask(subTask: SubTask)
+    suspend fun deleteSubTask(subTask: SubTaskEntity)
 
     // List operations
    // @Query("SELECT * FROM lists ORDER BY name ASC")
@@ -71,13 +73,13 @@ interface TaskDao {
 
     // Attachment operations
     @Query("SELECT * FROM attachments WHERE taskId = :taskId")
-    fun getAttachmentsForTask(taskId: String): Flow<List<Attachment>>
+    fun getAttachmentsForTask(taskId: String): Flow<List<AttachmentEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAttachment(attachment: Attachment)
+    suspend fun insertAttachment(attachment: AttachmentEntity)
 
     @Delete
-    suspend fun deleteAttachment(attachment: Attachment)
+    suspend fun deleteAttachment(attachment: AttachmentEntity)
 
 
 
@@ -146,11 +148,11 @@ data class TaskWithDetails(
         parentColumn = "id",
         entityColumn = "taskId"
     )
-    val subtasks: List<SubTask>,
+    val subtasks: List<SubTaskEntity>,
     @Relation(
         parentColumn = "id",
         entityColumn = "taskId"
     )
-    val attachments: List<Attachment>
+    val attachments: List<AttachmentEntity>
 )
 

@@ -1,14 +1,20 @@
 package com.example.to_do.data.local
 
-// data/local/TodoDatabase.kt
-
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.example.to_do.data.model.*
+import com.example.to_do.data.entity.AttachmentEntity
+import com.example.to_do.data.entity.SubTaskEntity
+import com.example.to_do.data.entity.TaskEntity
+import com.example.to_do.data.entity.TaskListEntity
 
 @Database(
-    entities = [Task::class, SubTask::class, TaskList::class, Attachment::class],
-    version = 1,
+    entities = [
+        TaskEntity::class,
+        SubTaskEntity::class,
+        TaskListEntity::class,
+        AttachmentEntity::class
+    ],
+    version = 2,              // ← was 1, bump because the entity set changed
     exportSchema = false
 )
 abstract class TodoDatabase : RoomDatabase() {

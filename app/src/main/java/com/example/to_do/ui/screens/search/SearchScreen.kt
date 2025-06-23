@@ -1,6 +1,7 @@
 package com.example.to_do.ui.screens.search
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -10,7 +11,10 @@ import androidx.navigation.NavController
 import com.example.to_do.ui.components.TaskItem
 import com.example.to_do.ui.components.TodoAppBar
 import com.example.to_do.ui.viewmodel.TaskViewModel
+
+
 import kotlinx.coroutines.flow.*
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,9 +46,9 @@ fun SearchScreen(
                 items(results) { task ->
                     TaskItem(
                         task = task,
-                        onTaskClick = {
-                            navController.navigate("task_detail/${task.id}")
-                        }
+                        onTaskClick       = { navController.navigate("task_detail/${task.id}") },
+                        onCompleteToggle  = vm::toggleTaskCompletion,
+                        onImportantToggle = vm::toggleImportant
                     )
                 }
             }

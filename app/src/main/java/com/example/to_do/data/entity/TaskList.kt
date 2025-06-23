@@ -1,4 +1,4 @@
-package com.example.to_do.data.model
+package com.example.to_do.data.entity
 
 // models/TaskList.kt
 

@@ -107,6 +107,7 @@ dependencies {
 
 
 
+
     implementation("com.google.dagger:hilt-android:2.50")
     ksp("com.google.dagger:hilt-compiler:2.50")
     // Additional dependencies you want to add:

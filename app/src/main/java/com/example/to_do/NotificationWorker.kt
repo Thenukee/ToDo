@@ -11,6 +11,7 @@ import androidx.core.app.TaskStackBuilder
 import androidx.work.*
 import com.example.to_do.MainActivity
 import com.example.to_do.R
+import com.example.to_do.data.entity.TaskEntity
 import java.util.concurrent.TimeUnit
 
 
@@ -87,7 +88,7 @@ class NotificationWorker(
          */
         fun scheduleReminder(
             context: Context,
-            task: Task
+            task: TaskEntity
         ) {
             // Only schedule if there's a reminder time
             val reminderTime = task.reminderTime ?: return

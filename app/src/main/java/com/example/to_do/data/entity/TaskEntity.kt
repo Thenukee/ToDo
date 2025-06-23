@@ -5,6 +5,8 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.*
+import java.util.UUID           // string IDs survive re-ordering
+
 
 @Entity(
     tableName = "tasks",
@@ -21,6 +23,7 @@ import java.util.*
 data class TaskEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val title: String,
+    val description: String = "",
     val isCompleted: Boolean = false,
     val isImportant: Boolean = false,
     val isInMyDay: Boolean = false,
@@ -31,3 +34,4 @@ data class TaskEntity(
     val position: Int = 0,
     val listId: String? = null            // NEW: nullable → “Tasks” root group
 )
+

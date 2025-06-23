@@ -4,9 +4,10 @@ package com.example.to_do.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.to_do.data.model.SubTask
-import com.example.to_do.data.model.TaskList
-import com.example.to_do.data.model.Attachment
+import com.example.to_do.data.entity.TaskEntity
+import com.example.to_do.data.entity.SubTaskEntity
+import com.example.to_do.data.entity.TaskList
+import com.example.to_do.data.entity.AttachmentEntity
 import com.example.to_do.data.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -29,7 +30,7 @@ class TaskViewModel @Inject constructor(
 
     // Task operations
     fun createTask(title: String, listId: String? = null, isImportant: Boolean = false, isInMyDay: Boolean = false) {
-        val task = Task(
+        val task = TaskEntity(
             title = title,
             listId = listId,
             isImportant = isImportant,
@@ -40,19 +41,26 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun updateTask(task: Task) {
+    fun updateTask(task: TaskEntity) {
         viewModelScope.launch {
             repository.updateTask(task.copy(modifiedAt = System.currentTimeMillis()))
         }
     }
 
-    fun deleteTask(task: Task) {
+    fun deleteTask(task: TaskEntity) {
         viewModelScope.launch {
             repository.deleteTask(task)
         }
     }
 
-    fun toggleTaskCompletion(task: Task) {
+    fun getList(id: String) = repository.getList(id)             // Flow<TaskListEntity?>
+
+    fun swapPositions(listId: String, from: Int, to: Int) =
+        viewModelScope.launch { repository.swapTaskPositions(listId, from, to) }
+
+
+
+    fun toggleTaskCompletion(task: TaskEntity) {
         viewModelScope.launch {
             repository.updateTask(
                 task.copy(
@@ -63,7 +71,7 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun toggleImportant(task: Task) {
+    fun toggleImportant(task: TaskEntity) {
         viewModelScope.launch {
             repository.updateTask(
                 task.copy(
@@ -74,7 +82,7 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun toggleMyDay(task: Task) {
+    fun toggleMyDay(task: TaskEntity) {
         viewModelScope.launch {
             repository.updateTask(
                 task.copy(
@@ -85,7 +93,7 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun setDueDate(task: Task, dueDate: Long?) {
+    fun setDueDate(task: TaskEntity, dueDate: Long?) {
         viewModelScope.launch {
             repository.updateTask(
                 task.copy(
@@ -96,7 +104,10 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun setReminder(task: Task, reminderTime: Long?) {
+    fun searchTasks(q: String) = repository.searchTasks(q)
+
+
+    fun setReminder(task: TaskEntity, reminderTime: Long?) {
         viewModelScope.launch {
             repository.updateTask(
                 task.copy(
@@ -111,7 +122,7 @@ class TaskViewModel @Inject constructor(
     fun getSubTasks(taskId: String) = repository.getSubTasksForTask(taskId)
 
     fun addSubTask(taskId: String, title: String, position: Int) {
-        val subTask = SubTask(
+        val subTask = SubTaskEntity(
             taskId = taskId,
             title = title,
             position = position
@@ -121,13 +132,13 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun updateSubTask(subTask: SubTask) {
+    fun updateSubTask(subTask: SubTaskEntity) {
         viewModelScope.launch {
             repository.updateSubTask(subTask)
         }
     }
 
-    fun toggleSubTaskCompletion(subTask: SubTask) {
+    fun toggleSubTaskCompletion(subTask: SubTaskEntity) {
         viewModelScope.launch {
             repository.updateSubTask(
                 subTask.copy(isCompleted = !subTask.isCompleted)
@@ -135,7 +146,7 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun deleteSubTask(subTask: SubTask) {
+    fun deleteSubTask(subTask: SubTaskEntity) {
         viewModelScope.launch {
             repository.deleteSubTask(subTask)
         }
@@ -169,7 +180,7 @@ class TaskViewModel @Inject constructor(
     fun getAttachments(taskId: String) = repository.getAttachmentsForTask(taskId)
 
     fun addAttachment(taskId: String, uri: String, name: String, type: String, size: Long) {
-        val attachment = Attachment(
+        val attachment = AttachmentEntity(
             taskId = taskId,
             uri = uri,
             name = name,
@@ -181,7 +192,7 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun deleteAttachment(attachment: Attachment) {
+    fun deleteAttachment(attachment: AttachmentEntity) {
         viewModelScope.launch {
             repository.deleteAttachment(attachment)
         }
@@ -189,7 +200,7 @@ class TaskViewModel @Inject constructor(
     // Add this method to your TaskViewModel.kt file
 // to make the ListTasksScreen compile
 
-    fun getTasksByList(listId: String): Flow<List<Task>> {
+    fun getTasksByList(listId: String): Flow<List<TaskEntity>> {
         return repository.getTasksByList(listId)
     }
 

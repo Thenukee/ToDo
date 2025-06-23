@@ -1,5 +1,6 @@
 package com.example.to_do.ui.screens.list
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,34 +15,42 @@ import com.example.to_do.ui.components.AddTaskBar
 import com.example.to_do.ui.components.TaskItem
 import com.example.to_do.ui.components.TodoAppBar
 import com.example.to_do.ui.viewmodel.TaskViewModel
+import org.burnoutcrew.reorderable.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.draw.shadow
 
-import org.burnoutcrew.reorderable.offsetByKey
-import org.burnoutcrew.reorderable.draggedItem
+
+import com.example.to_do.data.entity.TaskListEntity
+
+
+//import org.burnoutcrew.reorderable.offsetByKey
+//import org.burnoutcrew.reorderable.draggedItem
 
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ListTasksScreen(
     navController: NavController,
-    backStackEntry: NavBackStackEntry,                 // <-- get listId from NavArgs
+    backStackEntry: NavBackStackEntry,
     vm: TaskViewModel = hiltViewModel()
 ) {
-    /* ------------------------------------------------------------- */
-    /* read nav argument                                             */
-    /* ------------------------------------------------------------- */
+    // ────────────────────────────────────────────────────────────────
+    // 1.  Read the listId that was passed in the Nav route
+    // ────────────────────────────────────────────────────────────────
     val listId = backStackEntry.arguments?.getString("listId")!!
-    val list by vm.getList(listId).collectAsState(initial = null)   // optional helper
+    val list by vm.getList(listId).collectAsState(initial = null)
     val tasks by vm.getTasksByList(listId).collectAsState(initial = emptyList())
 
-    /* ---------------- reorder state ------------------------------ */
+    // ────────────────────────────────────────────────────────────────
+    // 2.  Reorder-state (new API)
+    // ────────────────────────────────────────────────────────────────
     val reorderState = rememberReorderableLazyListState(
         onMove = { from, to -> vm.swapPositions(listId, from.index, to.index) }
     )
-    val scope = rememberCoroutineScope()
 
-    /* ---------------- UI ----------------------------------------- */
     Scaffold(
         topBar = {
             TodoAppBar(
@@ -56,29 +65,35 @@ fun ListTasksScreen(
                 placeholder = "Add a task to ${(list?.name ?: "this list")}"
             )
         }
-    ) { innerPadding ->
+    ) { inner ->
         LazyColumn(
             state = reorderState.listState,
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(inner)
                 .padding(horizontal = 16.dp)
-                .reorderable(reorderState)                // handle drag gesture
-                .detectReorderAfterLongPress(reorderState) // long-press start
+                .reorderable(reorderState)                 // drag-logic
+                .detectReorderAfterLongPress(reorderState) // long-press starts drag
         ) {
-            items(
-                items = tasks,
-                key = { it.id }                           // stable key for animation
-            ) { task ->
-                TaskItem(
-                    task = task,
-                    modifier = Modifier
-                        .draggedItem(reorderState.offsetByKey(task.id)), // follow touch
-                    onTaskClick = { navController.navigate("task_detail/${task.id}") },
-                    onCompleteToggle = { vm.toggleTaskCompletion(it) },
-                    onImportantToggle = { vm.toggleImportant(it) }
-                )
+
+            // NEW – wrap every row in ReorderableItem -----------------------------
+            items(tasks, key = { it.id }) { task ->
+                ReorderableItem(reorderState, key = task.id) { isDragging ->
+
+                    TaskItem(
+                        task = task,
+                        modifier = Modifier
+                            .animateItemPlacement()
+                            .shadow(if (isDragging) 4.dp else 0.dp), // visual feedback
+                        onTaskClick = { navController.navigate("task_detail/${task.id}") },
+                        onCompleteToggle = vm::toggleTaskCompletion,
+                        onImportantToggle = vm::toggleImportant
+                    )
+                }
             }
+
             item { Spacer(Modifier.height(80.dp)) }
         }
     }
 }
+
+

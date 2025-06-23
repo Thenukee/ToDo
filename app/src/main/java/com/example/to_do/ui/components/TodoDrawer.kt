@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.to_do.data.model.TaskList
+import com.example.to_do.data.entity.TaskList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
