@@ -20,19 +20,11 @@ fun SettingsScreen(
     val darkTheme by vm.darkTheme.collectAsState()   // Flow → State<Boolean>
     val sortAsc   by vm.sortAsc.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "Settings",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        }
-    ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+
                 .padding(16.dp)
         ) {
 
@@ -104,4 +96,4 @@ fun SettingsScreen(
             }
         }
     }
-}
+

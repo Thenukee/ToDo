@@ -24,13 +24,7 @@ fun PlannedScreen(
     val plannedTasks by viewModel.plannedTasks.collectAsState(initial = emptyList())
 
     Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "Planned",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        },
+
         bottomBar = {
             AddTaskBar(
                 onAddTask = { title ->

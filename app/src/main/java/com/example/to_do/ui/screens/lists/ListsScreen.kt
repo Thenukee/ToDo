@@ -23,13 +23,7 @@ fun ListsScreen(
     val lists by vm.allLists.collectAsState(initial = emptyList())
 
     Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "Lists",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        },
+
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 vm.createList(name = "New list", color = 0xFF90CAF9.toInt())

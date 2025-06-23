@@ -61,12 +61,7 @@ fun HomeScreen(
         }
     ) {
         Scaffold(
-            topBar = {
-                TodoAppBar(
-                    title = "All Tasks",
-                    onMenuClick = { scope.launch { drawerState.open() } }  // ☰ opens drawer
-                )
-            },
+
             bottomBar = {
                 AddTaskBar(
                     onAddTask = { title -> viewModel.createTask(title) }

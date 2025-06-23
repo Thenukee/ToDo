@@ -52,13 +52,7 @@ fun ListTasksScreen(
     )
 
     Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = list?.name ?: "List",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        },
+
         bottomBar = {
             AddTaskBar(
                 onAddTask = { title -> vm.createTask(title, listId = listId) },

@@ -43,20 +43,12 @@ fun TaskDetailScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TodoAppBar(
-                title = "Task Details",
-                canNavigateBack = true,
-                onNavigateBack = { navController.navigateUp() }
-            )
-        }
-    ) { innerPadding ->
+
         task?.let { currentTask ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+
                     .padding(horizontal = 16.dp)
             ) {
                 item {
@@ -407,4 +399,4 @@ fun TaskDetailScreen(
             CircularProgressIndicator()
         }
     }
-}
+
