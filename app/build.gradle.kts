@@ -176,6 +176,13 @@ dependencies {
     // --- RecyclerView drag-drop helper ---
     implementation ("androidx.recyclerview:recyclerview:1.4.0")
 
+
+//    // ④ Accompanist System-UI controller
+//    implementation("com.google.accompanist:accompanist-systemuicontroller:0.37.3")
+//
+//
+//    // System-UI-Controller must stay on 0.36.0 (last published)
+//    implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -3,11 +3,17 @@ package com.example.to_do.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
+
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,30 +25,62 @@ fun AddTaskBar(
 ) {
     var taskTitle by remember { mutableStateOf("") }
 
-    OutlinedTextField(
-        value = taskTitle,
-        onValueChange = { taskTitle = it },
-        placeholder = { Text(text = placeholder) },
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
-        trailingIcon = {
-            IconButton(
-                onClick = {
-                    if (taskTitle.isNotBlank()) {
-                        onAddTask(taskTitle)
-                        taskTitle = ""
-                    }
-                },
-                enabled = taskTitle.isNotBlank()
-            ) {
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(24.dp),
+    ) {
+        TextField(
+            value = taskTitle,
+            onValueChange = { taskTitle = it },
+            placeholder = { 
+                Text(text = placeholder, style = MaterialTheme.typography.bodyMedium) 
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+            ),
+            leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Task"
+                    Icons.Default.Add,
+                    contentDescription = "Add Task",
+                    modifier = Modifier.padding(start = 8.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
-            }
-        },
-        singleLine = true
-    )
+            },
+            trailingIcon = {
+                if (taskTitle.isNotBlank()) {
+                    IconButton(
+                        onClick = {
+                            if (taskTitle.isNotBlank()) {
+                                onAddTask(taskTitle)
+                                taskTitle = ""
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Send, // Changed to send icon
+                            contentDescription = "Add Task",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                if (taskTitle.isNotBlank()) {
+                    onAddTask(taskTitle)
+                    taskTitle = ""
+                }
+            }),
+            singleLine = true
+        )
+    }
 }

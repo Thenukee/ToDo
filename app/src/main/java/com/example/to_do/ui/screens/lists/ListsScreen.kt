@@ -37,6 +37,10 @@ fun ListsScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var newListName by remember { mutableStateOf("") }
     var selectedList by remember { mutableStateOf<TaskListEntity?>(null) }
+    var selectedColor by remember { mutableStateOf(0xFF90CAF9.toInt()) } // Default blue
+    var selectedEmoji by remember { mutableStateOf<String?>(null) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    var showEmojiPicker by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
     Scaffold(
@@ -227,27 +231,79 @@ fun ListsScreen(
         }
     }
     
-    // Add list dialog
+    // Add list dialog with color and emoji selection
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
             title = { Text("Create New List") },
             text = {
-                OutlinedTextField(
-                    value = newListName,
-                    onValueChange = { newListName = it },
-                    label = { Text("List Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    OutlinedTextField(
+                        value = newListName,
+                        onValueChange = { newListName = it },
+                        label = { Text("List Name") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Color preview
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(Color(selectedColor), MaterialTheme.shapes.small)
+                                .clickable { showColorPicker = true }
+                        )
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        // Emoji selection
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
+                                .clickable { showEmojiPicker = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = selectedEmoji ?: "🔤",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.weight(1f))
+                        
+                        // Color select button
+                        TextButton(onClick = { showColorPicker = true }) {
+                            Text("Change Color")
+                        }
+                        
+                        // Emoji select button
+                        TextButton(onClick = { showEmojiPicker = true }) {
+                            Text("Change Emoji")
+                        }
+                    }
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
                         if (newListName.isNotBlank()) {
-                            vm.createList(name = newListName.trim(), color = 0xFF90CAF9.toInt())
+                            vm.createList(
+                                name = newListName.trim(),
+                                color = selectedColor,
+                                emoji = selectedEmoji
+                            )
                             showAddDialog = false
                             newListName = ""
+                            selectedColor = 0xFF90CAF9.toInt()
+                            selectedEmoji = null
                         }
                     },
                     enabled = newListName.isNotBlank()
@@ -257,6 +313,97 @@ fun ListsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showAddDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Color picker dialog
+    if (showColorPicker) {
+        val colors = listOf(
+            0xFF3F51B5.toInt(), // Indigo
+            0xFF2196F3.toInt(), // Blue
+            0xFF009688.toInt(), // Teal
+            0xFF4CAF50.toInt(), // Green
+            0xFFFF9800.toInt(), // Orange
+            0xFFFF5252.toInt(), // Red
+            0xFF9C27B0.toInt(), // Purple
+            0xFF673AB7.toInt()  // Deep Purple
+        )
+        
+        AlertDialog(
+            onDismissRequest = { showColorPicker = false },
+            title = { Text("Choose a Color") },
+            text = {
+                LazyColumn {
+                    items(colors.chunked(4)) { row ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            row.forEach { color ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .background(Color(color), shape = MaterialTheme.shapes.small)
+                                        .clickable {
+                                            selectedColor = color
+                                            showColorPicker = false
+                                        }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showColorPicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Emoji picker dialog
+    if (showEmojiPicker) {
+        val emojis = listOf(
+            "📝", "📌", "🏠", "🛒", "💼", "🎓", "🎯", "🔖",
+            "📚", "💡", "🎬", "🎮", "🏋️", "🍔", "🛫", "💰"
+        )
+        
+        AlertDialog(
+            onDismissRequest = { showEmojiPicker = false },
+            title = { Text("Choose an Emoji") },
+            text = {
+                LazyColumn {
+                    items(emojis.chunked(4)) { row ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            row.forEach { emoji ->
+                                Text(
+                                    text = emoji,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    modifier = Modifier
+                                        .clickable {
+                                            selectedEmoji = emoji
+                                            showEmojiPicker = false
+                                        }
+                                        .padding(8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showEmojiPicker = false }) {
                     Text("Cancel")
                 }
             }

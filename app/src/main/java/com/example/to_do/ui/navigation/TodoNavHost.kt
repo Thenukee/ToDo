@@ -1,6 +1,9 @@
 package com.example.to_do.ui.navigation
 
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,6 +19,7 @@ import com.example.to_do.ui.screens.settings.SettingsScreen
 import com.example.to_do.ui.screens.list.ListTasksScreen // Make sure this import is using the singular 'list' package
 import com.example.to_do.ui.screens.lists.ListsScreen
 import com.example.to_do.ui.screens.splash.SplashScreen
+import com.example.to_do.ui.theme.AppTransitions
 
 @Composable
 fun TodoNavHost(navController: NavHostController) {
@@ -23,13 +27,21 @@ fun TodoNavHost(navController: NavHostController) {
         navController = navController,
         startDestination = "splash" // Changed to splash screen
     ) {
-        // Add splash screen route
-        composable("splash") {
+        composable(
+            route = "splash",
+            enterTransition = { fadeIn(animationSpec = tween(300)) },
+            exitTransition = { fadeOut(animationSpec = tween(300)) }
+        ) {
             SplashScreen(navController = navController)
         }
         
-        // Lists screen route
-        composable("lists") {
+        composable(
+            route = "lists",
+            enterTransition = AppTransitions.enterTransition,
+            exitTransition = AppTransitions.exitTransition,
+            popEnterTransition = AppTransitions.popEnterTransition,
+            popExitTransition = AppTransitions.popExitTransition
+        ) {
             ListsScreen(navController = navController)
         }
         

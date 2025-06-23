@@ -35,6 +35,9 @@ class TaskRepository @Inject constructor(
 
     /** One-shot fetch used by ListTasksScreen & rename dialog */
     fun getList(id: String): Flow<TaskListEntity?> = dao.getList(id)
+    
+    /** Synchronous version for direct access in coroutine scope */
+    suspend fun getListSync(id: String): TaskListEntity? = dao.getListSync(id)
 
     /* ───────────────────────  Tasks  ──────────────────────────── */
 

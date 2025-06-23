@@ -91,7 +91,9 @@ fun TodoAppTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+            // Use surface color for status bar instead of primary for better visual integration
+            window.statusBarColor = colorScheme.surfaceVariant.toArgb()
+            // Adjust status bar text color based on theme
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

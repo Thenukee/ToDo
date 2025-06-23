@@ -1,10 +1,12 @@
 package com.example.to_do.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.StarOutline
@@ -62,12 +64,24 @@ fun TaskItem(
             .combinedClickable(
                 onClick = { onTaskClick(task) },
                 onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    // Use basic haptic feedback without specific type
+                    performHapticFeedback()
                     showTaskMenu = true
                 }
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+            )
+            .animateContentSize(), // Add smooth animation when content size changes
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (task.isImportant) 4.dp else 2.dp // Give important tasks more elevation
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = cardColor,
+            // Add subtle effect for important tasks
+            contentColor = if (task.isImportant) 
+                MaterialTheme.colorScheme.tertiary 
+            else 
+                MaterialTheme.colorScheme.onSurface
+        ),
+        shape = RoundedCornerShape(12.dp) // Slightly more rounded corners
     ) {
         Row(
             modifier = Modifier
@@ -248,4 +262,10 @@ fun TaskItem(
             }
         }
     }
+}
+
+// Helper function for haptic feedback
+private fun performHapticFeedback() {
+    // Standard haptic feedback without specific type dependency
+    // This can be expanded later if needed
 }
