@@ -10,6 +10,8 @@ sealed class Screen(
     val needsBack: Boolean,
     val title: String
 ) {
+    object Splash     : Screen("splash",     needsBack = false, title = "Welcome")
+    object Lists      : Screen("lists",      needsBack = false, title = "My Lists") 
     object Home       : Screen("home",       needsBack = false, title = "All Tasks")
     object MyDay      : Screen("my_day",     needsBack = false, title = "My Day")
     object Important  : Screen("important",  needsBack = false, title = "Important")
@@ -34,6 +36,8 @@ sealed class Screen(
             allLists: List<TaskListEntity>
         ): Screen {
             return when {
+                route == Splash.routePattern    -> Splash
+                route == Lists.routePattern     -> Lists
                 route == Home.routePattern      -> Home
                 route == MyDay.routePattern     -> MyDay
                 route == Important.routePattern -> Important

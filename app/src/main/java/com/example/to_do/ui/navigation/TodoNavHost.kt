@@ -14,13 +14,25 @@ import com.example.to_do.ui.screens.important.ImportantScreen
 import com.example.to_do.ui.screens.planned.PlannedScreen
 import com.example.to_do.ui.screens.settings.SettingsScreen
 import com.example.to_do.ui.screens.list.ListTasksScreen
+import com.example.to_do.ui.screens.lists.ListsScreen
+import com.example.to_do.ui.screens.splash.SplashScreen
 
 @Composable
 fun TodoNavHost(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = "splash" // Changed to splash screen
     ) {
+        // Add splash screen route
+        composable("splash") {
+            SplashScreen(navController = navController)
+        }
+        
+        // Lists screen route
+        composable("lists") {
+            ListsScreen(navController = navController)
+        }
+
         composable("home") {
             HomeScreen(navController = navController)
         }
