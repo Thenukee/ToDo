@@ -9,17 +9,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.to_do.data.entity.TaskList
+import com.example.to_do.data.entity.TaskListEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoDrawer(
     selectedRoute: String,
-    taskLists: List<TaskList>,
+    taskLists: List<TaskListEntity>,
     onMyDayClick: () -> Unit,
     onImportantClick: () -> Unit,
     onPlannedClick: () -> Unit,
-    onListClick: (TaskList) -> Unit,
+    onListClick: (TaskListEntity) -> Unit,
     onSettingsClick: () -> Unit,
     onCreateListClick: () -> Unit,
     modifier: Modifier = Modifier

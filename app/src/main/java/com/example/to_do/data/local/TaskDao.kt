@@ -7,7 +7,6 @@ import com.example.to_do.data.entity.AttachmentEntity
 import com.example.to_do.data.entity.ListWithTasks
 import com.example.to_do.data.entity.SubTaskEntity
 import com.example.to_do.data.entity.TaskEntity
-import com.example.to_do.data.entity.TaskList
 import com.example.to_do.data.entity.TaskListEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -58,14 +57,14 @@ interface TaskDao {
    // @Query("SELECT * FROM lists ORDER BY name ASC")
     //fun getAllLists(): Flow<List<TaskList>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertList(taskList: TaskList)
+  //  @Insert(onConflict = OnConflictStrategy.REPLACE)
+   // suspend fun insertList(taskList: TaskList)
 
-    @Update
-    suspend fun updateList(taskList: TaskList)
+    //@Update
+    //suspend fun updateList(taskList: TaskList)
 
-    @Delete
-    suspend fun deleteList(taskList: TaskList)
+   // @Delete
+    //suspend fun deleteList(taskList: TaskList)
 
     @Insert suspend fun insertList(list: TaskListEntity)
     @Update suspend fun updateList(list: TaskListEntity)

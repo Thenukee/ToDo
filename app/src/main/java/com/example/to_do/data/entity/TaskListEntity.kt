@@ -6,7 +6,7 @@ import java.util.*
 
 
 // Converts a Room entity to the domain model
-fun TaskListEntity.toDomain() = TaskList(
+fun TaskListEntity.toDomain() = TaskListEntity(
     id    = id,
     name  = name,
     color = color,
@@ -14,7 +14,7 @@ fun TaskListEntity.toDomain() = TaskList(
 )
 @Entity(tableName = "task_lists")
 data class TaskListEntity(
-    @PrimaryKey val id: String,
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),   // default id
     val name: String,
     val color: Int,
     val emoji: String? = null,

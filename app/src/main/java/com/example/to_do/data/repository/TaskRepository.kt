@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 
 
 import com.example.to_do.data.entity.TaskEntity
-import com.example.to_do.data.entity.TaskList
+import com.example.to_do.data.entity.TaskListEntity
 import com.example.to_do.data.local.TaskDao
 import com.example.to_do.data.local.TaskWithDetails
 import javax.inject.Inject
@@ -60,11 +60,11 @@ class TaskRepository @Inject constructor(
         taskDao.swapPositions(listId, from, to)
 
 
-    suspend fun insertList(taskList: TaskList) = taskDao.insertList(taskList)
+    suspend fun insertList(taskList: TaskListEntity) = taskDao.insertList(taskList)
 
-    suspend fun updateList(taskList: TaskList) = taskDao.updateList(taskList)
+    suspend fun updateList(taskList: TaskListEntity) = taskDao.updateList(taskList)
 
-    suspend fun deleteList(taskList: TaskList) = taskDao.deleteList(taskList)
+    suspend fun deleteList(taskList: TaskListEntity) = taskDao.deleteList(taskList)
 
     fun searchTasks(q: String): Flow<List<TaskEntity>> =
         flowOf(q)

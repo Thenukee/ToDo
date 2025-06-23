@@ -4,14 +4,16 @@ package com.example.to_do.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.PrimaryKey
 import com.example.to_do.data.entity.TaskEntity
 import com.example.to_do.data.entity.SubTaskEntity
-import com.example.to_do.data.entity.TaskList
 import com.example.to_do.data.entity.AttachmentEntity
+import com.example.to_do.data.entity.TaskListEntity
 import com.example.to_do.data.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -154,23 +156,22 @@ class TaskViewModel @Inject constructor(
 
     // List operations
     fun createList(name: String, color: Int, emoji: String? = null) {
-        val taskList = TaskList(
-            name = name,
+        val taskList = TaskListEntity(
+
+            name  = name,
             color = color,
             emoji = emoji
         )
-        viewModelScope.launch {
-            repository.insertList(taskList)
-        }
+        viewModelScope.launch { repository.insertList(taskList) }
     }
 
-    fun updateList(taskList: TaskList) {
+    fun updateList(taskList: TaskListEntity) {
         viewModelScope.launch {
             repository.updateList(taskList)
         }
     }
 
-    fun deleteList(taskList: TaskList) {
+    fun deleteList(taskList: TaskListEntity) {
         viewModelScope.launch {
             repository.deleteList(taskList)
         }

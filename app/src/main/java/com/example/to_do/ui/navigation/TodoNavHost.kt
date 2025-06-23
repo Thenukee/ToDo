@@ -13,7 +13,7 @@ import com.example.to_do.ui.screens.myday.MyDayScreen
 import com.example.to_do.ui.screens.important.ImportantScreen
 import com.example.to_do.ui.screens.planned.PlannedScreen
 import com.example.to_do.ui.screens.settings.SettingsScreen
-import com.example.to_do.ui.screens.lists.ListTasksScreen
+import com.example.to_do.ui.screens.list.ListTasksScreen
 
 @Composable
 fun TodoNavHost(navController: NavHostController) {
@@ -49,13 +49,12 @@ fun TodoNavHost(navController: NavHostController) {
         }
 
         composable(
-            "list_tasks/{listId}",
+            route = "list_tasks/{listId}",
             arguments = listOf(navArgument("listId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val listId = backStackEntry.arguments?.getString("listId") ?: ""
+        ) { backStackEntry ->                       // ← this is what ListTasksScreen needs
             ListTasksScreen(
-                listId = listId,
-                navController = navController
+                navController  = navController,
+                backStackEntry = backStackEntry     // ← pass the whole entry
             )
         }
 

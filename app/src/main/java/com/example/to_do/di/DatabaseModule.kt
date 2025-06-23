@@ -4,6 +4,7 @@ package com.example.to_do.di
 import android.content.Context
 import androidx.room.Room
 import com.example.to_do.data.TodoDatabase
+import com.example.to_do.data.local.TaskDao
 import com.example.to_do.data.dao.TodoDao
 import dagger.Module
 import dagger.Provides
@@ -24,5 +25,5 @@ object DatabaseModule {
             .build()
 
     @Provides
-    fun provideTodoDao(db: TodoDatabase): TodoDao = db.todoDao()
+    fun provideTaskDao(db: TodoDatabase): TaskDao = db.taskDao()
 }
