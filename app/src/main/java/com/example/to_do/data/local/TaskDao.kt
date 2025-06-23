@@ -83,15 +83,38 @@ interface TaskDao {
 
 
 
-    @Query("SELECT * FROM task_lists")
+    @Query("SELECT * FROM task_lists ORDER BY position ASC")
     fun getAllLists(): Flow<List<TaskListEntity>>
 
+    @Transaction
+    suspend fun swapListPositions(fromIndex: Int, toIndex: Int) {
+        val current = getAllListsSync()
+        val mutable = current.toMutableList().apply {
+            add(toIndex, removeAt(fromIndex))
+        }
+        mutable.forEachIndexed { idx, lst ->
+            if (lst.position != idx) {
+                updateList(lst.copy(position = idx))
+            }
+        }
+    }
 
-
+    @Query("SELECT * FROM task_lists")
+    suspend fun getAllListsSync(): List<TaskListEntity>
 
     @Transaction
     @Query("SELECT * FROM task_lists")
     fun getListsWithTasks(): Flow<List<ListWithTasks>>
+
+
+
+
+
+    @Query("SELECT * FROM task_lists WHERE id = :id LIMIT 1")
+    suspend fun getListSync(id: String): TaskListEntity?
+
+    @Query("DELETE FROM task_lists WHERE id = :id")
+    suspend fun deleteListById(id: String)
 
 
     // ---- Tasks by list ----

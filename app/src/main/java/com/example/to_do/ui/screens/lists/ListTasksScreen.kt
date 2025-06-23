@@ -48,8 +48,12 @@ fun ListTasksScreen(
     // 2.  Reorder-state (new API)
     // ────────────────────────────────────────────────────────────────
     val reorderState = rememberReorderableLazyListState(
-        onMove = { from, to -> vm.swapPositions(listId, from.index, to.index) }
+        onMove = { from, to ->
+            vm.swapTaskPositions(listId, from.index, to.index)   // <— updated name
+        }
     )
+
+
 
     Scaffold(
 

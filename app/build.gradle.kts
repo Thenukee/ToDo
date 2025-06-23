@@ -103,6 +103,7 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
 
     implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+    //implementation("org.burnoutcrew.composereorderable:reorderable:0.8.1")
 
 
 

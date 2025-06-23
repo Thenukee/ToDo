@@ -1,211 +1,142 @@
 package com.example.to_do.ui.viewmodel
 
-// ui/viewmodel/TaskViewModel.kt
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.PrimaryKey
-import com.example.to_do.data.entity.TaskEntity
-import com.example.to_do.data.entity.SubTaskEntity
-import com.example.to_do.data.entity.AttachmentEntity
-import com.example.to_do.data.entity.TaskListEntity
+import com.example.to_do.data.entity.*
 import com.example.to_do.data.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
-    private val repository: TaskRepository
+    private val repo: TaskRepository
 ) : ViewModel() {
 
-    // States for different task views
-    val allTasks = repository.getAllTasks()
-    val myDayTasks = repository.getMyDayTasks()
-    val importantTasks = repository.getImportantTasks()
-    val plannedTasks = repository.getPlannedTasks()
+    /* ───────────── Streams ───────────── */
 
-    // Task lists
-    val allLists = repository.getAllLists()
+    val allTasks       = repo.getAllTasks()
+    val myDayTasks     = repo.getMyDayTasks()
+    val importantTasks = repo.getImportantTasks()
+    val plannedTasks   = repo.getPlannedTasks()
 
-    // Task operations
-    fun createTask(title: String, listId: String? = null, isImportant: Boolean = false, isInMyDay: Boolean = false) {
-        val task = TaskEntity(
-            title = title,
-            listId = listId,
-            isImportant = isImportant,
-            isInMyDay = isInMyDay
+    val allLists: Flow<List<TaskListEntity>> = repo.allLists
+
+    /* ───────────── Lists ───────────── */
+
+    fun createList(
+        name: String,
+        color: Int,
+        emoji: String? = null,
+        id: String = UUID.randomUUID().toString()
+    ) = viewModelScope.launch {
+        repo.insertList(TaskListEntity(id, name.trim(), color, emoji, position = Int.MAX_VALUE))
+    }
+
+    fun swapListPositions(from: Int, to: Int) = viewModelScope.launch {
+        repo.swapListPositions(from, to)
+    }
+
+    fun renameList(id: String, newName: String) = viewModelScope.launch {
+        repo.renameList(id, newName)
+    }
+
+    fun deleteList(id: String) = viewModelScope.launch {
+        repo.deleteList(id)
+    }
+
+    fun getList(id: String): Flow<TaskListEntity?> = repo.getList(id)
+
+    /* ───────────── Tasks ───────────── */
+
+    fun createTask(
+        title: String,
+        listId: String? = null,
+        isImportant: Boolean = false,
+        isInMyDay: Boolean = false
+    ) = viewModelScope.launch {
+        repo.insertTask(
+            TaskEntity(
+                title       = title.trim(),
+                listId      = listId,
+                isImportant = isImportant,
+                isInMyDay   = isInMyDay
+            )
         )
-        viewModelScope.launch {
-            repository.insertTask(task)
-        }
     }
 
-    fun updateTask(task: TaskEntity) {
-        viewModelScope.launch {
-            repository.updateTask(task.copy(modifiedAt = System.currentTimeMillis()))
-        }
+    fun updateTask(task: TaskEntity) = viewModelScope.launch {
+        repo.updateTask(task)
     }
 
-    fun deleteTask(task: TaskEntity) {
-        viewModelScope.launch {
-            repository.deleteTask(task)
-        }
+    fun deleteTask(task: TaskEntity) = viewModelScope.launch {
+        repo.deleteTask(task)
     }
 
-    fun getList(id: String) = repository.getList(id)             // Flow<TaskListEntity?>
+//    fun swapTaskPositions(listId: String, from: Int, to: Int) = viewModelScope.launch {
+//        repo.swapTaskPositions(listId, from, to)
+//    }
 
-    fun swapPositions(listId: String, from: Int, to: Int) =
-        viewModelScope.launch { repository.swapTaskPositions(listId, from, to) }
-
-
-
-    fun toggleTaskCompletion(task: TaskEntity) {
+    fun swapTaskPositions(listId: String, from: Int, to: Int) =
         viewModelScope.launch {
-            repository.updateTask(
-                task.copy(
-                    isCompleted = !task.isCompleted,
-                    modifiedAt = System.currentTimeMillis()
-                )
+            repo.swapTaskPositions(listId, from, to)
+        }
+
+
+    fun getTasksByList(listId: String) = repo.getTasksByList(listId)
+
+    /* Toggles & helpers */
+
+    fun toggleTaskCompletion(t: TaskEntity) = updateTask(t.copy(isCompleted = !t.isCompleted))
+    fun toggleImportant(t: TaskEntity)      = updateTask(t.copy(isImportant = !t.isImportant))
+    fun toggleMyDay(t: TaskEntity)          = updateTask(t.copy(isInMyDay   = !t.isInMyDay))
+
+    fun setDueDate(t: TaskEntity, due: Long?)   = updateTask(t.copy(dueDate     = due))
+    fun setReminder(t: TaskEntity, at:  Long?)  = updateTask(t.copy(reminderTime = at))
+
+    /* ───────────── Sub-tasks & Attachments ───────────── */
+
+    fun getSubTasks(taskId: String) = repo.getSubTasksForTask(taskId)
+    fun addSubTask(taskId: String, title: String, position: Int) = viewModelScope.launch {
+        repo.insertSubTask(
+            SubTaskEntity(
+                taskId   = taskId,          // ✅ goes to the taskId column
+                title    = title.trim(),    // ✅ now the title parameter is provided
+                position = position         // ✅ any extra optional args keep defaults
             )
-        }
-    }
-
-    fun toggleImportant(task: TaskEntity) {
-        viewModelScope.launch {
-            repository.updateTask(
-                task.copy(
-                    isImportant = !task.isImportant,
-                    modifiedAt = System.currentTimeMillis()
-                )
-            )
-        }
-    }
-
-    fun toggleMyDay(task: TaskEntity) {
-        viewModelScope.launch {
-            repository.updateTask(
-                task.copy(
-                    isInMyDay = !task.isInMyDay,
-                    modifiedAt = System.currentTimeMillis()
-                )
-            )
-        }
-    }
-
-    fun setDueDate(task: TaskEntity, dueDate: Long?) {
-        viewModelScope.launch {
-            repository.updateTask(
-                task.copy(
-                    dueDate = dueDate,
-                    modifiedAt = System.currentTimeMillis()
-                )
-            )
-        }
-    }
-
-    fun searchTasks(q: String) = repository.searchTasks(q)
-
-
-    fun setReminder(task: TaskEntity, reminderTime: Long?) {
-        viewModelScope.launch {
-            repository.updateTask(
-                task.copy(
-                    reminderTime = reminderTime,
-                    modifiedAt = System.currentTimeMillis()
-                )
-            )
-        }
-    }
-
-    // SubTask operations
-    fun getSubTasks(taskId: String) = repository.getSubTasksForTask(taskId)
-
-    fun addSubTask(taskId: String, title: String, position: Int) {
-        val subTask = SubTaskEntity(
-            taskId = taskId,
-            title = title,
-            position = position
         )
-        viewModelScope.launch {
-            repository.insertSubTask(subTask)
-        }
     }
 
-    fun updateSubTask(subTask: SubTaskEntity) {
-        viewModelScope.launch {
-            repository.updateSubTask(subTask)
-        }
-    }
+    fun toggleSubTaskCompletion(s: SubTaskEntity) =
+        viewModelScope.launch { repo.updateSubTask(s.copy(isCompleted = !s.isCompleted)) }
+    fun deleteSubTask(s: SubTaskEntity) = viewModelScope.launch { repo.deleteSubTask(s) }
 
-    fun toggleSubTaskCompletion(subTask: SubTaskEntity) {
-        viewModelScope.launch {
-            repository.updateSubTask(
-                subTask.copy(isCompleted = !subTask.isCompleted)
+    fun getAttachments(taskId: String) = repo.getAttachmentsForTask(taskId)
+    fun addAttachment(
+        taskId: String,
+        uri: String,
+        name: String,
+        type: String,
+        size: Long
+    ) = viewModelScope.launch {
+        repo.insertAttachment(
+            AttachmentEntity(
+                taskId = taskId,   // FK to the task
+                uri    = uri,
+                name   = name.trim(),
+                type   = type,
+                size   = size      // now the correct field gets a Long
+                // id     = UUID.randomUUID().toString() // add only if your entity needs it
             )
-        }
-    }
-
-    fun deleteSubTask(subTask: SubTaskEntity) {
-        viewModelScope.launch {
-            repository.deleteSubTask(subTask)
-        }
-    }
-
-    // List operations
-    fun createList(name: String, color: Int, emoji: String? = null) {
-        val taskList = TaskListEntity(
-
-            name  = name,
-            color = color,
-            emoji = emoji
         )
-        viewModelScope.launch { repository.insertList(taskList) }
     }
 
-    fun updateList(taskList: TaskListEntity) {
-        viewModelScope.launch {
-            repository.updateList(taskList)
-        }
-    }
+    fun deleteAttachment(a: AttachmentEntity) = viewModelScope.launch { repo.deleteAttachment(a) }
 
-    fun deleteList(taskList: TaskListEntity) {
-        viewModelScope.launch {
-            repository.deleteList(taskList)
-        }
-    }
+    /* ───────────── Search & Details ───────────── */
 
-    // Attachment operations
-    fun getAttachments(taskId: String) = repository.getAttachmentsForTask(taskId)
-
-    fun addAttachment(taskId: String, uri: String, name: String, type: String, size: Long) {
-        val attachment = AttachmentEntity(
-            taskId = taskId,
-            uri = uri,
-            name = name,
-            type = type,
-            size = size
-        )
-        viewModelScope.launch {
-            repository.insertAttachment(attachment)
-        }
-    }
-
-    fun deleteAttachment(attachment: AttachmentEntity) {
-        viewModelScope.launch {
-            repository.deleteAttachment(attachment)
-        }
-    }
-    // Add this method to your TaskViewModel.kt file
-// to make the ListTasksScreen compile
-
-    fun getTasksByList(listId: String): Flow<List<TaskEntity>> {
-        return repository.getTasksByList(listId)
-    }
-
-    // Get task with all details
-    fun getTaskWithDetails(taskId: String) = repository.getTaskWithDetails(taskId)
+    fun searchTasks(q: String)            = repo.searchTasks(q)
+    fun getTaskWithDetails(id: String)    = repo.getTaskWithDetails(id)
 }
-

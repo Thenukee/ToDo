@@ -18,5 +18,6 @@ data class TaskListEntity(
     val name: String,
     val color: Int,
     val emoji: String? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val position: Int =0
 )
