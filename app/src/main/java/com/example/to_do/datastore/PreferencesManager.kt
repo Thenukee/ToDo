@@ -18,6 +18,8 @@ class PreferencesManager @Inject constructor(
     // --- Public flows the UI can collect ------------------------------------
     val darkTheme   = context.appDataStore.data.map { it[PreferenceKeys.DARK_THEME] ?: false }
     val sortAsc     = context.appDataStore.data.map { it[PreferenceKeys.SORT_ASC] ?: true  }
+    val autoBackup  = context.appDataStore.data.map { it[PreferenceKeys.AUTO_BACKUP] ?: true }
+    val lastBackupTime = context.appDataStore.data.map { it[PreferenceKeys.LAST_BACKUP_TIME] ?: 0L }
 
     // --- Mutators ------------------------------------------------------------
     suspend fun setDarkTheme(on: Boolean) =
@@ -25,4 +27,10 @@ class PreferencesManager @Inject constructor(
 
     suspend fun setSortAsc(on: Boolean)  =
         context.appDataStore.edit { it[PreferenceKeys.SORT_ASC] = on }
+        
+    suspend fun setAutoBackup(on: Boolean) =
+        context.appDataStore.edit { it[PreferenceKeys.AUTO_BACKUP] = on }
+        
+    suspend fun setLastBackupTime(time: Long) =
+        context.appDataStore.edit { it[PreferenceKeys.LAST_BACKUP_TIME] = time }
 }

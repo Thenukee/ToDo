@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.to_do.data.entity.TaskListEntity
 
@@ -29,7 +30,10 @@ fun TodoDrawer(
 
         Text(
             text = "Todo App",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.SemiBold
+            ),
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(16.dp)
         )
 
@@ -37,7 +41,12 @@ fun TodoDrawer(
 
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.WbSunny, contentDescription = "My Day") },
-            label = { Text("My Day") },
+            label = { 
+                Text(
+                    "My Day",
+                    style = MaterialTheme.typography.bodyLarge
+                ) 
+            },
             selected = selectedRoute == "my_day",
             onClick = onMyDayClick,
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -45,7 +54,12 @@ fun TodoDrawer(
 
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Star, contentDescription = "Important") },
-            label = { Text("Important") },
+            label = { 
+                Text(
+                    "Important",
+                    style = MaterialTheme.typography.bodyLarge
+                ) 
+            },
             selected = selectedRoute == "important",
             onClick = onImportantClick,
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -53,7 +67,12 @@ fun TodoDrawer(
 
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.DateRange, contentDescription = "Planned") },
-            label = { Text("Planned") },
+            label = { 
+                Text(
+                    "Planned",
+                    style = MaterialTheme.typography.bodyLarge
+                ) 
+            },
             selected = selectedRoute == "planned",
             onClick = onPlannedClick,
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -70,13 +89,15 @@ fun TodoDrawer(
         ) {
             Text(
                 text = "Lists",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
             )
 
             IconButton(onClick = onCreateListClick) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Create new list"
+                    contentDescription = "Create new list",
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -90,7 +111,12 @@ fun TodoDrawer(
                         Text(text = emoji)
                     } ?: Icon(Icons.Default.List, contentDescription = null)
                 },
-                label = { Text(list.name) },
+                label = { 
+                    Text(
+                        list.name,
+                        style = MaterialTheme.typography.bodyMedium
+                    ) 
+                },
                 selected = selectedRoute == listRoute,
                 onClick = { onListClick(list) },
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
@@ -105,7 +131,12 @@ fun TodoDrawer(
 
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-            label = { Text("Settings") },
+            label = { 
+                Text(
+                    "Settings",
+                    style = MaterialTheme.typography.bodyLarge
+                ) 
+            },
             selected = selectedRoute == "settings",
             onClick = onSettingsClick,
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)

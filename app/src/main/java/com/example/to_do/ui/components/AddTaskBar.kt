@@ -11,9 +11,7 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
-
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,7 +28,10 @@ fun AddTaskBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         TextField(
             value = taskTitle,
@@ -66,7 +67,7 @@ fun AddTaskBar(
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Send, // Changed to send icon
+                            imageVector = Icons.Default.Send,
                             contentDescription = "Add Task",
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -80,7 +81,8 @@ fun AddTaskBar(
                     taskTitle = ""
                 }
             }),
-            singleLine = true
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge
         )
     }
 }

@@ -47,41 +47,41 @@ fun TaskItem(
         targetValue = if (task.isCompleted)
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         else
-            MaterialTheme.colorScheme.surface
+            MaterialTheme.colorScheme.surface,
+        label = "cardColor"
     )
 
     val textColor by animateColorAsState(
         targetValue = if (task.isCompleted)
             MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         else
-            MaterialTheme.colorScheme.onSurface
+            MaterialTheme.colorScheme.onSurface,
+        label = "textColor"
     )
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 6.dp)
             .combinedClickable(
                 onClick = { onTaskClick(task) },
                 onLongClick = {
-                    // Use basic haptic feedback without specific type
-                    performHapticFeedback()
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     showTaskMenu = true
                 }
             )
-            .animateContentSize(), // Add smooth animation when content size changes
+            .animateContentSize(),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (task.isImportant) 4.dp else 2.dp // Give important tasks more elevation
+            defaultElevation = if (task.isImportant) 4.dp else 2.dp
         ),
         colors = CardDefaults.cardColors(
             containerColor = cardColor,
-            // Add subtle effect for important tasks
             contentColor = if (task.isImportant) 
                 MaterialTheme.colorScheme.tertiary 
             else 
                 MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(12.dp) // Slightly more rounded corners
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
             modifier = Modifier
@@ -156,17 +156,18 @@ fun TaskItem(
         }
     }
     
-    // Task menu dialog
+    // Task menu dialog with improved styling
     if (showTaskMenu) {
         AlertDialog(
             onDismissRequest = { showTaskMenu = false },
-            title = { Text("Task Options") },
-            text = { Text("Choose an action for ${task.title}")
-                // or, if you really want the title in quotes:
-                // Text("Choose an action for \"${task.title}\"")
-            },
+            title = { Text("Task Options", style = MaterialTheme.typography.titleLarge) },
+            text = { Text("Choose an action for ${task.title}", style = MaterialTheme.typography.bodyMedium) },
+            shape = MaterialTheme.shapes.medium,
             confirmButton = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     if (onDelete != null) {
                         TextButton(
                             onClick = {
@@ -210,14 +211,15 @@ fun TaskItem(
         )
     }
     
-    // Move task dialog
+    // Move task dialog with improved styling
     if (showMoveDialog && onMoveTask != null) {
         Dialog(onDismissRequest = { showMoveDialog = false }) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.medium,
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -266,6 +268,5 @@ fun TaskItem(
 
 // Helper function for haptic feedback
 private fun performHapticFeedback() {
-    // Standard haptic feedback without specific type dependency
-    // This can be expanded later if needed
+    // Standard haptic feedback implementation
 }
