@@ -1,0 +1,120 @@
+Technical Report: Todo App Android Project
+Project Overview
+This is a comprehensive Todo application for Android built with modern architectural patterns and libraries. The application allows users to create and manage tasks, organize them into lists, set due dates and reminders, attach files, and back up data to Firebase.
+
+Architecture
+The application follows the MVVM (Model-View-ViewModel) architecture pattern with a clean separation of concerns:
+
+View Layer: Jetpack Compose UI components
+ViewModel Layer: Manages UI state and business logic
+Repository Layer: Abstracts data sources
+Data Layer: Room database, DataStore preferences, and Firebase cloud storage
+Libraries and Technologies
+Core Android & Kotlin
+Kotlin: Primary programming language (1.9.x)
+Jetpack Compose: Modern declarative UI toolkit (1.6.3)
+Material3: Design system implementation
+Coroutines: Asynchronous programming (1.9.0)
+Kotlin Flow: Reactive data streams
+Architecture Components
+ViewModel: UI state management (2.8.1)
+Room: SQLite database abstraction (2.6.1)
+DataStore: Preferences storage (1.1.1)
+Navigation Compose: In-app navigation (2.7.7)
+Hilt: Dependency injection (2.50)
+WorkManager: Background task scheduling (2.9.0)
+Firebase
+Firebase Auth: User authentication
+Firebase Firestore: Cloud database for backup
+Firebase Storage: File storage capabilities
+Utility Libraries
+Timber: Logging utility (5.0.1)
+Reorderable: Drag-and-drop functionality for lists (0.9.6)
+DocumentFile: File system interactions (1.0.1)
+Database Structure
+Room Database (TodoDatabase)
+The app uses a Room database with the following entities:
+
+TaskEntity
+Primary task model with fields:
+id (String, UUID): Primary key
+title (String): Task title
+description (String): Task details
+isCompleted (Boolean): Completion status
+isImportant (Boolean): Priority flag
+isInMyDay (Boolean): My Day collection flag
+dueDate (Long?): Optional due date timestamp
+reminderTime (Long?): Optional reminder timestamp
+listId (String?): Foreign key to TaskListEntity
+position (Int): For ordering tasks
+createdAt/modifiedAt (Long): Timestamps
+TaskListEntity
+Represents task lists:
+id (String): Primary key
+name (String): List name
+color (Int): List color
+emoji (String?): Optional emoji
+position (Int): For ordering lists
+createdAt (Long): Creation timestamp
+SubTaskEntity
+Represents steps within a task:
+id (String): Primary key
+taskId (String): Foreign key to TaskEntity
+title (String): Subtask title
+isCompleted (Boolean): Completion status
+position (Int): For ordering subtasks
+AttachmentEntity
+Represents file attachments:
+id (String): Primary key
+taskId (String): Foreign key to TaskEntity
+uri (String): File URI
+name (String): File name
+type (String): MIME type
+size (Long): File size in bytes
+Data Flow
+Repository Pattern
+The TaskRepository acts as a mediator between the ViewModel and data sources:
+
+UI State Management
+ViewModels expose Flow<T> objects that the UI collects
+Changes to data trigger UI updates through Flow collection
+ViewModels launch coroutines for background operations
+Database Access
+Data access is performed through DAOs (Data Access Objects)
+TaskDao provides methods for CRUD operations
+Queries return Flow objects for reactive UI updates
+Key Features Implementation
+Task Management
+Tasks can be created, edited, organized into lists
+Tasks support subtasks, attachments, due dates, and reminders
+Special collections: My Day, Important, Planned
+List Management
+Users can create custom lists with colors and emoji icons
+Lists can be reordered via drag-and-drop (using Reorderable library)
+Lists can be duplicated (with all contained tasks)
+Cloud Backup
+BackupWorker extends CoroutineWorker to handle background backup
+Automatic scheduled backups via WorkManager
+Anonymous authentication via Firebase Auth
+Task data synced to Firebase Firestore
+File Structure
+Key Implementation Details
+Task Reordering
+The app implements custom position tracking for tasks and lists, with specialized swap functions in the DAO:
+
+Cloud Backup System
+The backup system is implemented using WorkManager with network constraints:
+
+BackupWorker handles data extraction and upload
+Anonymous Firebase authentication ensures user data separation
+Backup status is shown through system notifications
+User preferences can enable/disable automatic backups
+User Preferences
+Preferences are stored using Jetpack DataStore:
+
+Technical Challenges & Solutions
+Task Reordering: Implemented position-based ordering with atomic swap operations
+Data Relationships: Used Room's @Relation annotation to handle one-to-many relationships
+Background Sync: Leveraged WorkManager with network constraints for efficient backups
+State Management: Used Kotlin Flow to maintain reactive UI updates
+This Todo application demonstrates a well-structured, modern Android application following best practices for architecture, data management, and UI implementation.
