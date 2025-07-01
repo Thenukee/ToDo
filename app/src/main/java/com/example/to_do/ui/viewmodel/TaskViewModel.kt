@@ -2,17 +2,24 @@ package com.example.to_do.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.to_do.data.entity.*
 import com.example.to_do.data.repository.TaskRepository
+import com.example.to_do.data.worker.BackupWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
-    private val repo: TaskRepository
+    private val repo: TaskRepository,
+    private val workManager: WorkManager
 ) : ViewModel() {
 
     /* ───────────── Streams ───────────── */
@@ -204,4 +211,109 @@ class TaskViewModel @Inject constructor(
             repo.updateTask(updatedTask)
         }
     }
+
+    /* ───────────── Backup ───────────── */
+    
+    private val _backupState = MutableStateFlow<BackupState>(BackupState.Idle)
+    val backupState: StateFlow<BackupState> = _backupState
+    
+    // Keep track of observers to avoid memory leaks
+    private var currentBackupObserver: androidx.lifecycle.Observer<List<androidx.work.WorkInfo>>? = null
+    
+    fun backupToFirestore() = viewModelScope.launch {
+        _backupState.value = BackupState.InProgress
+        
+        try {
+            // Remove any existing observer to avoid leaks
+            currentBackupObserver?.let { observer ->
+                workManager.getWorkInfosByTagLiveData("backup_task").removeObserver(observer)
+                currentBackupObserver = null
+            }
+            
+            // Schedule a one-time backup work with network constraint
+            val backupRequest = OneTimeWorkRequestBuilder<BackupWorker>()
+                .setConstraints(
+                    androidx.work.Constraints.Builder()
+                        .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                        .build()
+                )
+                .addTag("backup_task") // Add tag for easy reference
+                .build()
+                
+            workManager.enqueue(backupRequest)
+            
+            // Create new observer for this backup task
+            val workObserver = androidx.lifecycle.Observer<List<androidx.work.WorkInfo>> { workInfoList ->
+                if (workInfoList.isNotEmpty()) {
+                    val workInfo = workInfoList[0]
+                    Timber.d("Backup work state: ${workInfo.state}")
+                    
+                    when (workInfo.state) {
+                        androidx.work.WorkInfo.State.SUCCEEDED -> {
+                            _backupState.value = BackupState.Success
+                            // Clean up observer
+                            removeBackupObserver()
+                        }
+                        androidx.work.WorkInfo.State.FAILED -> {
+                            // Get error details if available
+                            val errorMsg = workInfo.outputData.getString("error_message") ?: "Backup failed"
+                            _backupState.value = BackupState.Failed(errorMsg)
+                            // Clean up observer
+                            removeBackupObserver()
+                        }
+                        androidx.work.WorkInfo.State.RUNNING -> {
+                            _backupState.value = BackupState.InProgress
+                        }
+                        androidx.work.WorkInfo.State.CANCELLED -> {
+                            _backupState.value = BackupState.Failed("Backup was cancelled")
+                            // Clean up observer
+                            removeBackupObserver()
+                        }
+                        else -> {
+                            // Keep as scheduled for other states
+                            if (_backupState.value == BackupState.InProgress) {
+                                _backupState.value = BackupState.Scheduled
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Store reference to observer
+            currentBackupObserver = workObserver
+            
+            // Start observing
+            workManager.getWorkInfosByTagLiveData("backup_task").observeForever(workObserver)
+            
+            // Initially set to Scheduled state
+            _backupState.value = BackupState.Scheduled
+        } catch (e: Exception) {
+            Timber.e(e, "Error scheduling backup")
+            _backupState.value = BackupState.Failed(e.message ?: "Unknown error")
+        }
+    }
+    
+    // Helper function to remove backup observer
+    private fun removeBackupObserver() {
+        currentBackupObserver?.let { observer ->
+            workManager.getWorkInfosByTagLiveData("backup_task").removeObserver(observer)
+            currentBackupObserver = null
+        }
+    }
+
+    /**
+     * Reset the backup state to Idle
+     * Call this when you want to clear any previous backup state
+     */
+    fun resetBackupState() {
+        _backupState.value = BackupState.Idle
+    }
+}
+
+sealed class BackupState {
+    object Idle : BackupState()
+    object InProgress : BackupState()
+    object Scheduled : BackupState()
+    object Success : BackupState()
+    data class Failed(val message: String) : BackupState()
 }
