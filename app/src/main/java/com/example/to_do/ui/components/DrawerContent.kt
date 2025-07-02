@@ -7,19 +7,22 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -46,20 +49,20 @@ fun DrawerContent(
     filteredLists: List<TaskListEntity> = emptyList(),
     searchQuery: String = ""
 ) {
-    val scope    = rememberCoroutineScope()
-    val context  = LocalContext.current
-    val workMgr  = WorkManager.getInstance(context)
-    val lists    by vm.allLists.collectAsState(initial = emptyList())
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val workMgr = WorkManager.getInstance(context)
+    val lists by vm.allLists.collectAsState(initial = emptyList())
+    val haptic = LocalHapticFeedback.current
 
     // Use filtered lists if provided, otherwise use all lists
     val displayLists = if (filteredLists.isNotEmpty() || searchQuery.isNotBlank()) filteredLists else lists
 
     // reorder state for the LazyColumn
-    // 1) Hoist your reorder state for lists…
     val reorderState = rememberReorderableLazyListState(
         onMove = { from, to ->
-            // → swap list positions by index
             vm.swapListPositions(from.index, to.index)
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     )
 
@@ -71,32 +74,41 @@ fun DrawerContent(
     var showAddDialog by remember { mutableStateOf(false) }
     var newListName by remember { mutableStateOf("") }
 
-    ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
-        // App title at the top with proper styling
-        Text(
-            "Todo App",
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(16.dp)
-        )
+    ModalDrawerSheet(
+        modifier = Modifier.width(320.dp),
+        drawerContainerColor = MaterialTheme.colorScheme.surface,
+        drawerContentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        // App logo/header with enhanced styling
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 24.dp)
+        ) {
+            Text(
+                "Todo App",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // ─ Settings ───────────────────────
+        // Settings with better styling
         NavigationDrawerItem(
             label = { 
                 Text(
                     "Settings", 
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
                 ) 
             },
             icon = { 
                 Icon(
-                    Icons.Default.Settings, 
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    Icons.Outlined.Settings, 
+                    contentDescription = null
                 ) 
             },
             selected = false,
@@ -104,25 +116,29 @@ fun DrawerContent(
                 navController.navigate("settings")
                 scope.launch { closeDrawer() }
             },
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            colors = NavigationDrawerItemDefaults.colors(
+                unselectedContainerColor = Color.Transparent
+            )
         )
         
         Divider(
-            modifier = Modifier.padding(vertical = 12.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
         )
 
-        // ─ Lists header ────────────────────
+        // Lists header with better styling
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 24.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 "Lists",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
             
@@ -135,12 +151,12 @@ fun DrawerContent(
             }
         }
 
-        // ─ Reorderable list of your lists ─
+        // Empty state with better styling
         if (displayLists.isEmpty() && searchQuery.isNotBlank()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -152,109 +168,143 @@ fun DrawerContent(
                 )
             }
         } else {
+            // Lists with improved styling and visual feedback
             LazyColumn(
                 state = reorderState.listState,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
                     .reorderable(reorderState)
-                    .detectReorderAfterLongPress(reorderState)
+                    .detectReorderAfterLongPress(reorderState),
+                contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(displayLists, key = { it.id }) { list ->
-                    // 3) Each row becomes a ReorderableItem
                     ReorderableItem(reorderState, key = list.id) { isDragging ->
-                        Row(
-                            Modifier
+                        val elevation = if (isDragging) 8.dp else 0.dp
+                        
+                        Surface(
+                            modifier = Modifier
                                 .fillMaxWidth()
-                                .background(
-                                    if (isDragging) 
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) 
-                                    else 
-                                        Color.Transparent
-                                )
-                                .combinedClickable(
-                                    onClick = {
-                                        scope.launch {
-                                            closeDrawer()
-                                            navController.navigate("list_tasks/${list.id}")
-                                        }
-                                    },
-                                    onLongClick = {
-                                        editDialogFor = list
-                                        editName = list.name
-                                    }
-                                )
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(vertical = 2.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            shadowElevation = elevation,
+                            tonalElevation = if (isDragging) 2.dp else 0.dp,
+                            color = if (isDragging)
+                                MaterialTheme.colorScheme.secondaryContainer
+                            else 
+                                Color.Transparent
                         ) {
-                            Text(
-                                list.name, 
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Icon(
-                                Icons.Default.DragHandle, 
-                                contentDescription = "Drag handle",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                            )
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {
+                                            scope.launch {
+                                                closeDrawer()
+                                                navController.navigate("list_tasks/${list.id}")
+                                            }
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            editDialogFor = list
+                                            editName = list.name
+                                        }
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // List emoji or icon
+                                list.emoji?.let { emoji ->
+                                    Text(
+                                        text = emoji,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier
+                                            .padding(end = 16.dp)
+                                            .size(24.dp)
+                                    )
+                                } ?: Icon(
+                                    Icons.Filled.List,
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(end = 16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                
+                                // List name
+                                Text(
+                                    list.name, 
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    overflow = TextOverflow.Ellipsis,
+                                    maxLines = 1,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                
+                                // Drag handle with better styling
+                                Icon(
+                                    Icons.Filled.DragHandle, 
+                                    contentDescription = "Drag to reorder",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-        Spacer(Modifier.height(8.dp))
-
-        // ─ Backup utility ───────────────────
-        NavigationDrawerItem(
-            label = { 
-                Text(
-                    "Backup now",
-                    style = MaterialTheme.typography.bodyLarge
-                ) 
-            },
-            icon = { 
-                Icon(
-                    Icons.Default.CloudUpload, 
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                ) 
-            },
-            selected = false,
-            onClick = {
-                vm.backupToFirestore()
-                // Show feedback toast
-                Toast.makeText(context, "Backup started", Toast.LENGTH_SHORT).show()
-                scope.launch { closeDrawer() }
-            },
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+        Spacer(Modifier.weight(1f))
+        Divider(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
         )
 
-        // ─ New list entry ──────────────────
-        NavigationDrawerItem(
-            label = { 
-                Text(
-                    "New list",
-                    style = MaterialTheme.typography.bodyLarge
-                ) 
-            },
-            icon = { 
-                Icon(
-                    Icons.Default.Add, 
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                ) 
-            },
-            selected = false,
-            onClick = {
-                newListName = ""
-                showAddDialog = true
-            },
+        // Action buttons with improved styling
+        Row(
             modifier = Modifier
-                .padding(horizontal = 12.dp)
-                .padding(vertical = 4.dp)
-        )
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Backup button
+            FilledTonalButton(
+                onClick = {
+                    vm.backupToFirestore()
+                    Toast.makeText(context, "Backup started", Toast.LENGTH_SHORT).show()
+                    scope.launch { closeDrawer() }
+                },
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Icon(
+                    Icons.Filled.CloudUpload,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Backup")
+            }
+            
+            // New list button
+            Button(
+                onClick = {
+                    newListName = ""
+                    showAddDialog = true
+                },
+                modifier = Modifier.weight(1f).padding(start = 8.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("New List")
+            }
+        }
+        
+        Spacer(Modifier.height(8.dp))
     }
 
     // ─── Rename / Delete dialog ─────────────────────

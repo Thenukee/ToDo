@@ -67,3 +67,14 @@ val md_theme_dark_outline = Color(0xFF89938D)
 val md_theme_dark_inverseOnSurface = Color(0xFF191C1B)
 val md_theme_dark_inverseSurface = Color(0xFFE1E3E0)
 val md_theme_dark_inversePrimary = Color(0xFF006C51)
+
+// Success colors
+val md_theme_light_success = Color(0xFF006E1C)
+val md_theme_light_onSuccess = Color(0xFFFFFFFF)
+val md_theme_light_successContainer = Color(0xFFA1F699)
+val md_theme_light_onSuccessContainer = Color(0xFF002204)
+
+val md_theme_dark_success = Color(0xFF86D880)
+val md_theme_dark_onSuccess = Color(0xFF00390C)
+val md_theme_dark_successContainer = Color(0xFF005314)
+val md_theme_dark_onSuccessContainer = Color(0xFFA1F699)
