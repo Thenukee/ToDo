@@ -13,6 +13,7 @@ plugins {
 
 
 
+
 }
 
 android {
@@ -159,10 +160,11 @@ dependencies {
     // For file handling
     implementation("androidx.documentfile:documentfile:1.0.1")
 
-    // --- Firebase Firestore ---
+    // --- Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:33.5.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
 
     // Hilt WorkManager extension
@@ -209,4 +211,6 @@ dependencies {
     // Timber for logging
     implementation("com.jakewharton.timber:timber:5.0.1")
 
+    // For JSON export
+    implementation("com.google.code.gson:gson:2.10.1")
 }

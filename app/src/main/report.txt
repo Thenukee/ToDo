@@ -1,120 +1,214 @@
-Technical Report: Todo App Android Project
-Project Overview
-This is a comprehensive Todo application for Android built with modern architectural patterns and libraries. The application allows users to create and manage tasks, organize them into lists, set due dates and reminders, attach files, and back up data to Firebase.
+# Todo App Architecture and Technical Documentation
 
-Architecture
-The application follows the MVVM (Model-View-ViewModel) architecture pattern with a clean separation of concerns:
+## 1. Architecture Overview
 
-View Layer: Jetpack Compose UI components
-ViewModel Layer: Manages UI state and business logic
-Repository Layer: Abstracts data sources
-Data Layer: Room database, DataStore preferences, and Firebase cloud storage
-Libraries and Technologies
-Core Android & Kotlin
-Kotlin: Primary programming language (1.9.x)
-Jetpack Compose: Modern declarative UI toolkit (1.6.3)
-Material3: Design system implementation
-Coroutines: Asynchronous programming (1.9.0)
-Kotlin Flow: Reactive data streams
-Architecture Components
-ViewModel: UI state management (2.8.1)
-Room: SQLite database abstraction (2.6.1)
-DataStore: Preferences storage (1.1.1)
-Navigation Compose: In-app navigation (2.7.7)
-Hilt: Dependency injection (2.50)
-WorkManager: Background task scheduling (2.9.0)
-Firebase
-Firebase Auth: User authentication
-Firebase Firestore: Cloud database for backup
-Firebase Storage: File storage capabilities
-Utility Libraries
-Timber: Logging utility (5.0.1)
-Reorderable: Drag-and-drop functionality for lists (0.9.6)
-DocumentFile: File system interactions (1.0.1)
-Database Structure
-Room Database (TodoDatabase)
-The app uses a Room database with the following entities:
+This Todo application follows the MVVM (Model-View-ViewModel) architecture pattern with a clean separation of concerns:
 
-TaskEntity
-Primary task model with fields:
-id (String, UUID): Primary key
-title (String): Task title
-description (String): Task details
-isCompleted (Boolean): Completion status
-isImportant (Boolean): Priority flag
-isInMyDay (Boolean): My Day collection flag
-dueDate (Long?): Optional due date timestamp
-reminderTime (Long?): Optional reminder timestamp
-listId (String?): Foreign key to TaskListEntity
-position (Int): For ordering tasks
-createdAt/modifiedAt (Long): Timestamps
-TaskListEntity
-Represents task lists:
-id (String): Primary key
-name (String): List name
-color (Int): List color
-emoji (String?): Optional emoji
-position (Int): For ordering lists
-createdAt (Long): Creation timestamp
-SubTaskEntity
-Represents steps within a task:
-id (String): Primary key
-taskId (String): Foreign key to TaskEntity
-title (String): Subtask title
-isCompleted (Boolean): Completion status
-position (Int): For ordering subtasks
-AttachmentEntity
-Represents file attachments:
-id (String): Primary key
-taskId (String): Foreign key to TaskEntity
-uri (String): File URI
-name (String): File name
-type (String): MIME type
-size (Long): File size in bytes
-Data Flow
-Repository Pattern
-The TaskRepository acts as a mediator between the ViewModel and data sources:
+Architecture Layers:
+- UI Layer: Jetpack Compose UI components, ViewModels
+- Domain Layer: Business logic, use cases
+- Data Layer: Repository pattern, Room database, Firebase cloud backup
+- Utility Layer: Workers, services, and helper classes
 
-UI State Management
-ViewModels expose Flow<T> objects that the UI collects
-Changes to data trigger UI updates through Flow collection
-ViewModels launch coroutines for background operations
-Database Access
-Data access is performed through DAOs (Data Access Objects)
-TaskDao provides methods for CRUD operations
-Queries return Flow objects for reactive UI updates
-Key Features Implementation
-Task Management
-Tasks can be created, edited, organized into lists
-Tasks support subtasks, attachments, due dates, and reminders
-Special collections: My Day, Important, Planned
-List Management
-Users can create custom lists with colors and emoji icons
-Lists can be reordered via drag-and-drop (using Reorderable library)
-Lists can be duplicated (with all contained tasks)
-Cloud Backup
-BackupWorker extends CoroutineWorker to handle background backup
-Automatic scheduled backups via WorkManager
-Anonymous authentication via Firebase Auth
-Task data synced to Firebase Firestore
-File Structure
-Key Implementation Details
-Task Reordering
-The app implements custom position tracking for tasks and lists, with specialized swap functions in the DAO:
+The application uses modern Android architecture components and follows reactive programming principles with Kotlin Flows.
 
-Cloud Backup System
-The backup system is implemented using WorkManager with network constraints:
+## 2. Key Components and Their Relationships
 
-BackupWorker handles data extraction and upload
-Anonymous Firebase authentication ensures user data separation
-Backup status is shown through system notifications
-User preferences can enable/disable automatic backups
-User Preferences
-Preferences are stored using Jetpack DataStore:
+### 2.1 UI Layer
 
-Technical Challenges & Solutions
-Task Reordering: Implemented position-based ordering with atomic swap operations
-Data Relationships: Used Room's @Relation annotation to handle one-to-many relationships
-Background Sync: Leveraged WorkManager with network constraints for efficient backups
-State Management: Used Kotlin Flow to maintain reactive UI updates
-This Todo application demonstrates a well-structured, modern Android application following best practices for architecture, data management, and UI implementation.
+#### Activities
+- `MainActivity`: The single-activity application entry point that hosts navigation and the main drawer.
+
+#### ViewModels
+- `TaskViewModel`: Manages task-related operations (create, read, update, delete tasks and lists)
+- `SettingsViewModel`: Manages app settings and preferences
+- Both ViewModels expose StateFlow objects for UI to observe and react to state changes
+
+#### Screens
+- `MyDayScreen`: Shows tasks marked for "My Day"
+- `ListTasksScreen`: Shows tasks belonging to a specific list
+- `ImportantScreen`: Shows tasks marked as important
+- `TaskDetailScreen`: Shows and allows editing of task details
+- `SettingsScreen`: App settings and configuration
+- `SearchScreen`: Search functionality for finding tasks
+
+### 2.2 Data Layer
+
+#### Local Storage
+- `TodoDatabase`: Room database configuration
+- Entity Classes:
+  - `TaskEntity`: Represents a task
+  - `SubTaskEntity`: Represents steps within a task
+  - `TaskListEntity`: Represents a list containing tasks
+  - `AttachmentEntity`: Represents file attachments
+
+#### Remote Storage
+- `FirestoreManager`: Handles interactions with Firebase Firestore
+- `FirebaseAuthManager`: Handles Firebase authentication
+- `FirebaseBackupService`: Coordinates backup operations to Firebase
+
+#### Repositories
+- `TaskRepository`: Mediates between ViewModels and data sources
+- Acts as a single source of truth for the application
+
+### 2.3 Workers
+- `BackupWorker`: Handles background backup operations
+- `RestoreWorker`: Handles background restore operations
+
+### 2.4 Preferences
+- `PreferencesManager`: Manages app settings using DataStore Preferences
+
+## 3. Data Flows
+
+### 3.1 Task Creation and Management Flow
+
+1. **Task Creation**:
+   User input → UI → ViewModel.createTask() → Repository.insertTask() → Room Database
+   
+2. **Task Update**:
+   User edit → UI → ViewModel.updateTask() → Repository.updateTask() → Room Database
+   
+3. **Task Deletion**:
+   User action → UI → ViewModel.deleteTask() → Repository.deleteTask() → Room Database
+
+### 3.2 Data Observation Flow
+
+1. **Displaying Tasks**:
+   Room Database → Repository.getTasks() → Flow<List<TaskEntity>> → ViewModel → StateFlow<List<TaskEntity>> → UI collects and renders
+   
+2. **Settings**:
+   DataStore → PreferencesManager → Flow<Setting> → ViewModel → StateFlow<Setting> → UI reacts to changes
+
+### 3.3 Search Flow
+
+1. User input → ViewModel.updateSearchQuery() → Repository.searchTasks() → Room query → Results → UI updates
+
+### 3.4 Backup & Restore Flow
+
+1. **Backup**:
+   User action/Scheduled → WorkManager → BackupWorker → FirebaseBackupService → FirestoreManager → Firestore
+   
+2. **Restore**:
+   User action → WorkManager → RestoreWorker → FirebaseBackupService → FirestoreManager → Get data → Insert to Room
+
+### 3.5 Export Flow
+
+1. **JSON Export**:
+   User action → ViewModel.exportTasksToJson() → File creation → Write JSON data → File system
+   
+2. **Export to Firestore**:
+   User action → ViewModel.exportTasksAsJsonToFirestore() → FirestoreManager.sendTasksAsJson() → Firestore
+
+## 4. File Structure and Purpose
+
+### 4.1 UI Layer
+
+#### Activities
+- `MainActivity.kt`: App entry point, manages navigation and drawer
+
+#### ViewModels
+- `TaskViewModel.kt`: Manages task data and operations
+- `SettingsViewModel.kt`: Manages app settings and preferences
+
+#### Screens
+- `MyDayScreen.kt`: UI for the "My Day" view
+- `TaskDetailScreen.kt`: UI for viewing and editing task details
+- `SettingsScreen.kt`: UI for app settings
+- `ListsScreen.kt`: UI for displaying and managing lists
+- `SearchScreen.kt`: UI for searching tasks
+
+#### Components
+- `TodoAppBar.kt`: Top app bar with navigation and search
+- `TodoDrawer.kt`: Navigation drawer
+- `DrawerContent.kt`: Content displayed in the navigation drawer
+- `TaskItem.kt`: Reusable component for displaying a task in a list
+
+### 4.2 Data Layer
+
+#### Database
+- `TodoDatabase.kt`: Room database configuration
+
+#### Entities
+- `TaskEntity.kt`: Task data model
+- `SubTaskEntity.kt`: Subtask data model
+- `TaskListEntity.kt`: List data model
+- `AttachmentEntity.kt`: Attachment data model
+
+#### DAOs
+- `TaskDao.kt`: Data access object for tasks
+- `TodoDao.kt`: General data access object
+
+#### Repositories
+- `TaskRepository.kt`: Repository for task operations
+- `TodoRepository.kt`: General repository
+
+#### Firebase
+- `FirestoreManager.kt`: Manages Firestore operations
+- `FirebaseAuthManager.kt`: Manages Firebase authentication
+- `FirebaseBackupService.kt`: Handles backup and restore operations
+
+### 4.3 Workers
+- `BackupWorker.kt`: Background worker for backup operations
+- `RestoreWorker.kt`: Background worker for restore operations
+
+### 4.4 Preferences
+- `PreferencesManager.kt`: Manages app preferences using DataStore
+- `PreferenceKeys.kt`: Constants for preference keys
+
+### 4.5 Models
+- `TodoItem.kt`: Model for JSON export/import
+
+### 4.6 Export
+- `FileExportManager.kt`: Handles file export operations
+
+## 5. Technologies and Libraries
+
+1. **Kotlin**: Primary programming language
+2. **Jetpack Compose**: Modern declarative UI toolkit
+3. **Material3**: Design system implementation
+4. **Room**: SQLite database abstraction
+5. **Hilt**: Dependency injection
+6. **Coroutines & Flow**: Asynchronous programming and reactive streams
+7. **WorkManager**: Background task scheduling
+8. **DataStore**: Modern replacement for SharedPreferences
+9. **Firebase Auth**: User authentication
+10. **Firestore**: Cloud database for backup
+11. **Gson**: JSON serialization/deserialization
+
+## 6. Key Design Patterns
+
+1. **MVVM**: Separation of UI and business logic
+2. **Repository Pattern**: Single source of truth for data operations
+3. **Observer Pattern**: Using StateFlow for reactive UI updates
+4. **Dependency Injection**: Using Hilt for providing dependencies
+5. **Worker Pattern**: Using WorkManager for background tasks
+
+## 7. UI State Management
+
+The app uses a consistent approach to state management:
+- ViewModels expose immutable StateFlow objects
+- UI components collect these flows and react to changes
+- State classes (SearchState, ExportState, etc.) represent different UI states
+- Error handling is consistent across the application
+
+## 8. Navigation
+
+Navigation is handled using the Navigation Component:
+- `TodoNavHost`: Central navigation graph
+- `Screen`: Enum class representing different screens
+- Deep linking is supported for task details
+
+## 9. Testing Considerations
+
+- ViewModels are designed to be testable with clear responsibilities
+- Repository pattern makes it easier to mock data sources for testing
+- UI components follow composition principles for better testability
+
+## 10. Backup and Restore
+
+The app implements a robust backup and restore system:
+1. **Local Storage**: Room database for persistent local storage
+2. **Cloud Backup**: Firebase Firestore for cloud backup
+3. **Background Processing**: WorkManager ensures reliable background operations
+4. **User Control**: Users can manually trigger backup/restore or enable automatic backups
+5. **Export Options**: JSON export for data portability

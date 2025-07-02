@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run App",
+			"type": "shell",
+			"command": "cd e:\\Users\\Admin\\AndroidStudioProjects\\ToDo && ./gradlew installDebug",
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

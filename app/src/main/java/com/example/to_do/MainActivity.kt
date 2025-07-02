@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DrawerValue.Closed
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
@@ -57,7 +56,7 @@ fun RootApp() {
         val drawerState   = rememberDrawerState(DrawerValue.Closed)
         val scope         = rememberCoroutineScope()
 
-        // ③ Hoist a TaskViewModel so we can read allLists here
+        // Hoist a TaskViewModel so we can read allLists here
         val taskVm: TaskViewModel = hiltViewModel()
         val allLists by taskVm.allLists.collectAsState(initial = emptyList())
         
@@ -86,9 +85,9 @@ fun RootApp() {
             Scaffold(
                 topBar = {
                     val backStack by navController.currentBackStackEntryAsState()
-                    val route     = backStack?.destination?.route
-                    // ④ Lookup the right Screen (and its title)
-                    val screen    = Screen.fromRoute(route, backStack, allLists)
+                    val route = backStack?.destination?.route
+                    // Lookup the right Screen (and its title)
+                    val screen = Screen.fromRoute(route, backStack, allLists)
 
                     if (isSearchActive) {
                         TodoSearchBar(
@@ -101,11 +100,11 @@ fun RootApp() {
                         )
                     } else {
                         TodoAppBar(
-                            title           = screen.title,
+                            title = screen.title,
                             canNavigateBack = screen.needsBack,
-                            onNavigateBack  = { navController.navigateUp() },
-                            onMenuClick     = { scope.launch { drawerState.open() } },
-                            onSearchClick   = { isSearchActive = true }
+                            onNavigateBack = { navController.navigateUp() },
+                            onMenuClick = { scope.launch { drawerState.open() } },
+                            onSearchClick = { navController.navigate("search") }
                         )
                     }
                 }
@@ -117,3 +116,4 @@ fun RootApp() {
         }
     }
 }
+

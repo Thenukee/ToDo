@@ -125,8 +125,8 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE listId = :listId ORDER BY position ASC")
     suspend fun getTasksByListSync(listId: String): List<TaskEntity>
 
-    // Search
-    @Query("SELECT * FROM tasks WHERE title LIKE :query ORDER BY modifiedAt DESC")
+    // Standard search query - searches in title and description
+    @Query("SELECT * FROM tasks WHERE title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%' ORDER BY createdAt DESC")
     fun search(query: String): Flow<List<TaskEntity>>
 
     // --- single list by id ---
@@ -161,6 +161,10 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
     suspend fun getAllTasksSync(): List<TaskEntity>
+
+    // Debug version of search - searches only titles with exact match
+    @Query("SELECT * FROM tasks WHERE title = :exactTitle LIMIT 1")
+    suspend fun findTaskByExactTitle(exactTitle: String): TaskEntity?
 }
 
 

@@ -28,19 +28,37 @@ class FirebaseAuthManager @Inject constructor() {
     suspend fun ensureSignedIn(): Boolean {
         // If already signed in, return true
         auth.currentUser?.let {
-            Timber.d("User already signed in with ID: ${it.uid}")
+            Timber.d("FirebaseAuthManager: User already signed in with ID: ${it.uid}")
             return true
         }
         
         // Attempt anonymous sign-in
         return try {
+            Timber.d("FirebaseAuthManager: Attempting anonymous sign-in...")
             val result = auth.signInAnonymously().await()
             result.user?.let {
-                Timber.d("Anonymous sign-in successful, user ID: ${it.uid}")
+                Timber.d("FirebaseAuthManager: Anonymous sign-in successful, user ID: ${it.uid}")
                 true
-            } ?: false
+            } ?: run {
+                Timber.e("FirebaseAuthManager: Anonymous sign-in succeeded but user is null")
+                false
+            }
         } catch (e: Exception) {
-            Timber.e(e, "Anonymous sign-in failed")
+            Timber.e(e, "FirebaseAuthManager: Anonymous sign-in failed: ${e.javaClass.simpleName}: ${e.message}")
+            
+            // Check for specific Firebase Auth errors
+            when {
+                e.message?.contains("network error") == true -> {
+                    Timber.e("FirebaseAuthManager: Network error during sign-in. Check internet connection.")
+                }
+                e.message?.contains("API_KEY_INVALID") == true -> {
+                    Timber.e("FirebaseAuthManager: Invalid API key. Check your Firebase configuration.")
+                }
+                e.message?.contains("PROJECT_NOT_FOUND") == true -> {
+                    Timber.e("FirebaseAuthManager: Project not found. Check your Firebase project ID.")
+                }
+            }
+            
             false
         }
     }

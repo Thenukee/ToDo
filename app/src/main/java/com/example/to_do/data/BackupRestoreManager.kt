@@ -11,15 +11,18 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.to_do.data.firebase.FirestoreManager
 
 @Singleton
 class BackupRestoreManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val workManager: WorkManager,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val firestoreManager: FirestoreManager
 ) {
     
     /**
@@ -84,5 +87,31 @@ class BackupRestoreManager @Inject constructor(
      */
     suspend fun updateLastBackupTime() {
         preferencesManager.setLastBackupTime(System.currentTimeMillis())
+    }
+    
+    /**
+     * Send test data to Firestore to verify connectivity
+     * @return true if test was successful, false otherwise
+     */
+    suspend fun sendTestDataToFirestore(): Boolean {
+        if (!isUserSignedIn()) {
+            Timber.w("BackupRestoreManager: Cannot test Firestore: User not signed in")
+            // Try to sign in
+            try {
+                val signInResult = Firebase.auth.signInAnonymously().await()
+                if (signInResult.user == null) {
+                    Timber.e("BackupRestoreManager: Failed to sign in anonymously")
+                    return false
+                } else {
+                    Timber.d("BackupRestoreManager: Successfully signed in anonymously with ID: ${signInResult.user?.uid}")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "BackupRestoreManager: Error signing in anonymously: ${e.message}")
+                return false
+            }
+        }
+        
+        Timber.d("BackupRestoreManager: Sending test data to Firestore")
+        return firestoreManager.sendTestDataToFirestore()
     }
 }

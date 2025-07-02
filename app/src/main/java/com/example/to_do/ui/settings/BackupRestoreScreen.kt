@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import com.example.to_do.data.BackupRestoreManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,6 +16,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class BackupRestoreViewModel @Inject constructor(
@@ -23,12 +25,37 @@ class BackupRestoreViewModel @Inject constructor(
     private val _backupState = MutableStateFlow<BackupRestoreState>(BackupRestoreState.Idle)
     val backupState = _backupState.asStateFlow()
 
+    fun resetBackupState() {
+        _backupState.value = BackupRestoreState.Idle
+    }
+
     fun backupNow() {
-        _backupState.value = BackupRestoreState.InProgress("Backing up data...")
-        backupRestoreManager.backupNow()
-        // In a real app, we would observe the WorkInfo status
-        // For simplicity, we'll just set it to success after a delay
-        _backupState.value = BackupRestoreState.Success("Backup completed")
+        viewModelScope.launch {
+            _backupState.value = BackupRestoreState.InProgress("Testing Firestore connection and backing up data...")
+            
+            try {
+                // First, test the Firestore connection by sending test data
+                val testResult = backupRestoreManager.sendTestDataToFirestore()
+                
+                if (!testResult) {
+                    _backupState.value = BackupRestoreState.Error("Firestore connection test failed. Cannot proceed with backup.")
+                    return@launch
+                }
+                
+                Timber.d("Firestore connection test successful, proceeding with backup...")
+                _backupState.value = BackupRestoreState.InProgress("Firestore connection verified. Backing up data...")
+                
+                // Now proceed with the actual backup
+                backupRestoreManager.backupNow()
+                
+                // In a real app, we would observe the WorkInfo status
+                // For simplicity, we'll just set it to success
+                _backupState.value = BackupRestoreState.Success("Firestore connection verified and backup successfully scheduled.")
+            } catch (e: Exception) {
+                Timber.e(e, "Error during backup process: ${e.message}")
+                _backupState.value = BackupRestoreState.Error("Error: ${e.message}")
+            }
+        }
     }
 
     fun restoreFromCloud() {
@@ -37,6 +64,23 @@ class BackupRestoreViewModel @Inject constructor(
         // In a real app, we would observe the WorkInfo status
         // For simplicity, we'll just set it to success after a delay
         _backupState.value = BackupRestoreState.Success("Restore completed")
+    }
+    
+    fun testFirestoreConnection() {
+        viewModelScope.launch {
+            _backupState.value = BackupRestoreState.InProgress("Testing Firestore connection...")
+            try {
+                val result = backupRestoreManager.sendTestDataToFirestore()
+                if (result) {
+                    _backupState.value = BackupRestoreState.Success("Firestore test successful! Test data was sent.")
+                } else {
+                    _backupState.value = BackupRestoreState.Error("Firestore test failed. Check logs for details.")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error testing Firestore connection: ${e.message}")
+                _backupState.value = BackupRestoreState.Error("Error: ${e.message}")
+            }
+        }
     }
 }
 
@@ -53,6 +97,11 @@ fun BackupRestoreScreen(
 ) {
     val backupState by viewModel.backupState.collectAsState()
     val scope = rememberCoroutineScope()
+    
+    // Reset state when entering the screen
+    LaunchedEffect(Unit) {
+        viewModel.resetBackupState()
+    }
     
     var showConfirmRestore by remember { mutableStateOf(false) }
     
@@ -84,7 +133,8 @@ fun BackupRestoreScreen(
                 
                 Text(
                     text = "Your data is automatically backed up to the cloud daily. " +
-                           "You can also manually backup your data now."
+                           "Clicking 'Backup Now' will first verify the Firestore connection by sending test data, " +
+                           "then perform a full backup if successful."
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -127,6 +177,46 @@ fun BackupRestoreScreen(
                     enabled = backupState !is BackupRestoreState.InProgress
                 ) {
                     Text("Restore Data")
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Test Firestore Connection Card
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Firestore Connectivity Test",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Test your connection to Firebase Firestore by sending some test data. " +
+                           "Use this to diagnose backup issues."
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Button(
+                    onClick = { viewModel.testFirestoreConnection() },
+                    modifier = Modifier.align(Alignment.End),
+                    enabled = backupState !is BackupRestoreState.InProgress,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Text("Test Connection Only")
                 }
             }
         }

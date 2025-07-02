@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import android.widget.Toast
 import com.example.to_do.data.worker.BackupWorker
 import com.example.to_do.data.entity.TaskListEntity
 import com.example.to_do.ui.viewmodel.TaskViewModel
@@ -222,7 +223,9 @@ fun DrawerContent(
             },
             selected = false,
             onClick = {
-                workMgr.enqueue(OneTimeWorkRequest.from(BackupWorker::class.java))
+                vm.backupToFirestore()
+                // Show feedback toast
+                Toast.makeText(context, "Backup started", Toast.LENGTH_SHORT).show()
                 scope.launch { closeDrawer() }
             },
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)

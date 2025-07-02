@@ -73,13 +73,16 @@ class TaskRepository @Inject constructor(
 
     /* ───────────────────────  Search  ─────────────────────────── */
 
-    fun searchTasks(q: String): Flow<List<TaskEntity>> =
-        flowOf(q)
-            .debounce(300)
-            .distinctUntilChanged()
-            .flatMapLatest { query ->
-                dao.search("%${query.trim()}%")
-            }
+    // Simple, standard implementation of search
+    fun searchTasks(q: String): Flow<List<TaskEntity>> {
+        // Handle empty queries
+        if (q.isBlank()) {
+            return flowOf(emptyList())
+        }
+        
+        // Clean the query and send to DAO
+        return dao.search(q.trim())
+    }
 
     /* ───────────────────────  Details  ────────────────────────── */
 

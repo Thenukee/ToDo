@@ -20,6 +20,7 @@ import com.example.to_do.ui.screens.list.ListTasksScreen // Make sure this impor
 import com.example.to_do.ui.screens.lists.ListsScreen
 import com.example.to_do.ui.screens.splash.SplashScreen
 import com.example.to_do.ui.theme.AppTransitions
+import com.example.to_do.ui.screens.search.SearchScreen
 
 @Composable
 fun TodoNavHost(navController: NavHostController) {
@@ -84,6 +85,10 @@ fun TodoNavHost(navController: NavHostController) {
 
         composable("settings") {
             SettingsScreen(navController = navController)
+        }
+
+        composable("search") {
+            SearchScreen(navController = navController)
         }
     }
 }

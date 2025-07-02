@@ -5,12 +5,19 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.to_do.data.entity.*
+import com.example.to_do.data.firebase.FirebaseBackupService
+import com.example.to_do.data.firebase.FirestoreManager
+import com.example.to_do.data.local.TaskWithDetails
 import com.example.to_do.data.repository.TaskRepository
 import com.example.to_do.data.worker.BackupWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
@@ -19,7 +26,9 @@ import javax.inject.Inject
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val repo: TaskRepository,
-    private val workManager: WorkManager
+    private val workManager: WorkManager,
+    private val firestoreManager: FirestoreManager,
+    private val firebaseBackupService: FirebaseBackupService
 ) : ViewModel() {
 
     /* ───────────── Streams ───────────── */
@@ -194,8 +203,10 @@ class TaskViewModel @Inject constructor(
 
     /* ───────────── Search & Details ───────────── */
 
-    fun searchTasks(q: String)            = repo.searchTasks(q)
-    fun getTaskWithDetails(id: String)    = repo.getTaskWithDetails(id)
+    // Standard implementation of search
+    fun searchTasks(q: String): Flow<List<TaskEntity>> = repo.searchTasks(q)
+    
+    fun getTaskWithDetails(id: String): Flow<TaskWithDetails> = repo.getTaskWithDetails(id)
 
     fun moveTaskToList(task: TaskEntity, targetListId: String) = viewModelScope.launch {
         if (task.listId != targetListId) {
@@ -241,6 +252,9 @@ class TaskViewModel @Inject constructor(
                 .build()
                 
             workManager.enqueue(backupRequest)
+            
+            // Log that backup has started
+            Timber.d("Manual backup started via drawer")
             
             // Create new observer for this backup task
             val workObserver = androidx.lifecycle.Observer<List<androidx.work.WorkInfo>> { workInfoList ->
@@ -308,6 +322,127 @@ class TaskViewModel @Inject constructor(
     fun resetBackupState() {
         _backupState.value = BackupState.Idle
     }
+
+    /* ───────────── Firebase Test Methods ───────────── */
+
+    // State for the Firebase test operation
+    private val _firestoreTestState = MutableStateFlow<FirestoreTestState>(FirestoreTestState.Idle)
+    val firestoreTestState: StateFlow<FirestoreTestState> = _firestoreTestState
+    
+    /**
+     * Test Firestore connectivity by sending test data
+     * Call this method from UI to test if Firestore is working
+     */
+    fun testFirestoreConnection() = viewModelScope.launch {
+        _firestoreTestState.value = FirestoreTestState.InProgress
+        
+        Timber.d("TaskViewModel: Testing Firestore connection...")
+        
+        try {
+            // First verify Firebase authentication
+            if (!firebaseBackupService.verifyFirebaseConnection()) {
+                Timber.e("TaskViewModel: Firebase connection verification failed")
+                _firestoreTestState.value = FirestoreTestState.Failed("Firebase connection verification failed")
+                return@launch
+            }
+            
+            // Then try to send test data
+            val result = firestoreManager.sendTestDataToFirestore()
+            
+            if (result) {
+                Timber.d("TaskViewModel: Firestore test successful")
+                _firestoreTestState.value = FirestoreTestState.Success
+            } else {
+                Timber.e("TaskViewModel: Firestore test failed")
+                _firestoreTestState.value = FirestoreTestState.Failed("Failed to send test data to Firestore")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "TaskViewModel: Error during Firestore test: ${e.message}")
+            _firestoreTestState.value = FirestoreTestState.Failed(e.message ?: "Unknown error")
+        }
+    }
+    
+    /**
+     * Reset the Firestore test state
+     */
+    fun resetFirestoreTestState() {
+        _firestoreTestState.value = FirestoreTestState.Idle
+    }
+    
+    // Search functionality
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+    
+    private val _searchState = MutableStateFlow<SearchState>(SearchState.Idle)
+    val searchState: StateFlow<SearchState> = _searchState
+    
+    private val _searchResults = MutableStateFlow<List<TaskEntity>>(emptyList())
+    val searchResults: StateFlow<List<TaskEntity>> = _searchResults
+    
+    /**
+     * Update search query and trigger search if query is not empty
+     */
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        
+        if (query.isBlank()) {
+            // Clear results if query is blank
+            _searchResults.value = emptyList()
+            _searchState.value = SearchState.Idle
+        } else {
+            // Perform search with debounce
+            viewModelScope.launch {
+                delay(300) // Debounce for better UX
+                if (_searchQuery.value == query) { // Make sure this is still the latest query
+                    performSearch(query)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Perform search and update state
+     */
+    private fun performSearch(query: String) {
+        viewModelScope.launch {
+            try {
+                _searchState.value = SearchState.Searching
+                
+                // Similar to how we get tasks in backup functionality - use synchronous approach
+                val results = repo.searchTasks(query).first() // Get first emission
+                
+                _searchResults.value = results
+                _searchState.value = if (results.isEmpty()) {
+                    SearchState.NoResults
+                } else {
+                    SearchState.Success(results.size)
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error during search: ${e.message}")
+                _searchState.value = SearchState.Error(e.message ?: "Unknown error")
+                _searchResults.value = emptyList()
+            }
+        }
+    }
+    
+    /**
+     * Clear search query and results
+     */
+    fun clearSearch() {
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
+        _searchState.value = SearchState.Idle
+    }
+}
+
+/**
+ * State class for Firestore test operations
+ */
+sealed class FirestoreTestState {
+    object Idle : FirestoreTestState()
+    object InProgress : FirestoreTestState()
+    object Success : FirestoreTestState()
+    data class Failed(val message: String) : FirestoreTestState()
 }
 
 sealed class BackupState {
@@ -316,4 +451,15 @@ sealed class BackupState {
     object Scheduled : BackupState()
     object Success : BackupState()
     data class Failed(val message: String) : BackupState()
+}
+
+/**
+ * State for search operations
+ */
+sealed class SearchState {
+    object Idle : SearchState()
+    object Searching : SearchState()
+    object NoResults : SearchState()
+    data class Success(val count: Int) : SearchState()
+    data class Error(val message: String) : SearchState()
 }
